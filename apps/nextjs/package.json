@@ -36,6 +36,7 @@
     "@acme/prettier-config": "workspace:*",
     "@acme/tailwind-config": "workspace:*",
     "@acme/tsconfig": "workspace:*",
+    "@tailwindcss/postcss": "^4.1.7",
     "@types/node": "^22.15.3",
     "@types/react": "catalog:react19",
     "@types/react-dom": "catalog:react19",
@@ -43,7 +44,7 @@
     "eslint": "catalog:",
     "jiti": "^1.21.7",
     "prettier": "catalog:",
-    "tailwindcss": "catalog:",
+    "tailwindcss": "^4.1.7",
     "typescript": "catalog:"
   },
   "prettier": "@acme/prettier-config"

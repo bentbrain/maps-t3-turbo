@@ -136,7 +136,7 @@ export function PostCard(props: {
 
   return (
     <div className="flex flex-row rounded-lg bg-muted p-4">
-      <div className="flex-grow">
+      <div className="grow">
         <h2 className="text-2xl font-bold text-primary">{props.post.title}</h2>
         <p className="mt-2 text-sm">{props.post.content}</p>
       </div>
@@ -157,7 +157,7 @@ export function PostCardSkeleton(props: { pulse?: boolean }) {
   const { pulse = true } = props;
   return (
     <div className="flex flex-row rounded-lg bg-muted p-4">
-      <div className="flex-grow">
+      <div className="grow">
         <h2
           className={cn(
             "w-1/4 rounded bg-primary text-2xl font-bold",
