@@ -16,7 +16,6 @@
   "dependencies": {
     "@acme/api": "workspace:*",
     "@acme/auth": "workspace:*",
-    "@acme/db": "workspace:*",
     "@acme/ui": "workspace:*",
     "@acme/validators": "workspace:*",
     "@t3-oss/env-nextjs": "^0.13.4",
@@ -36,7 +35,7 @@
     "@acme/prettier-config": "workspace:*",
     "@acme/tailwind-config": "workspace:*",
     "@acme/tsconfig": "workspace:*",
-    "@tailwindcss/postcss": "^4.1.7",
+    "@tailwindcss/postcss": "catalog:",
     "@types/node": "^22.15.3",
     "@types/react": "catalog:react19",
     "@types/react-dom": "catalog:react19",
@@ -44,7 +43,7 @@
     "eslint": "catalog:",
     "jiti": "^1.21.7",
     "prettier": "catalog:",
-    "tailwindcss": "^4.1.7",
+    "tailwindcss": "catalog:",
     "typescript": "catalog:"
   },
   "prettier": "@acme/prettier-config"

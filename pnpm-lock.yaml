@@ -486,6 +486,9 @@ importers:
       tailwind-merge:
         specifier: ^3.2.0
         version: 3.2.0
+      tailwindcss:
+        specifier: ^4.1.7
+        version: 4.1.7
     devDependencies:
       '@acme/eslint-config':
         specifier: workspace:*
