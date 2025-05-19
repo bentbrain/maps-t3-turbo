@@ -6,24 +6,10 @@
  * tl;dr - this is where all the tRPC server stuff is created and plugged in.
  * The pieces you will need to use are documented accordingly near the end
  */
+import { auth } from "@clerk/nextjs/server";
 import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import { ZodError } from "zod";
-
-import type { Session } from "@acme/auth";
-import { auth, validateToken } from "@acme/auth";
-import { db } from "@acme/db/client";
-
-/**
- * Isomorphic Session getter for API requests
- * - Expo requests will have a session token in the Authorization header
- * - Next.js requests will have a session token in cookies
- */
-const isomorphicGetSession = async (headers: Headers) => {
-  const authToken = headers.get("Authorization") ?? null;
-  if (authToken) return validateToken(authToken);
-  return auth();
-};
 
 /**
  * 1. CONTEXT
@@ -37,20 +23,9 @@ const isomorphicGetSession = async (headers: Headers) => {
  *
  * @see https://trpc.io/docs/server/context
  */
-export const createTRPCContext = async (opts: {
-  headers: Headers;
-  session: Session | null;
-}) => {
-  const authToken = opts.headers.get("Authorization") ?? null;
-  const session = await isomorphicGetSession(opts.headers);
-
-  const source = opts.headers.get("x-trpc-source") ?? "unknown";
-  console.log(">>> tRPC Request from", source, "by", session?.user);
-
+export const createTRPCContext = (opts: { headers: Headers }) => {
   return {
-    session,
-    db,
-    token: authToken,
+    ...opts,
   };
 };
 
@@ -99,11 +74,11 @@ export const createTRPCRouter = t.router;
 const timingMiddleware = t.middleware(async ({ next, path }) => {
   const start = Date.now();
 
-  if (t._config.isDev) {
-    // artificial delay in dev 100-500ms
-    const waitMs = Math.floor(Math.random() * 400) + 100;
-    await new Promise((resolve) => setTimeout(resolve, waitMs));
-  }
+  // if (t._config.isDev) {
+  //   // artificial delay in dev 100-500ms
+  //   const waitMs = Math.floor(Math.random() * 400) + 100;
+  //   await new Promise((resolve) => setTimeout(resolve, waitMs));
+  // }
 
   const result = await next();
 
@@ -130,16 +105,12 @@ export const publicProcedure = t.procedure.use(timingMiddleware);
  *
  * @see https://trpc.io/docs/procedures
  */
-export const protectedProcedure = t.procedure
-  .use(timingMiddleware)
-  .use(({ ctx, next }) => {
-    if (!ctx.session?.user) {
-      throw new TRPCError({ code: "UNAUTHORIZED" });
-    }
-    return next({
-      ctx: {
-        // infers the `session` as non-nullable
-        session: { ...ctx.session, user: ctx.session.user },
-      },
-    });
-  });
+export const protectedProcedure = t.procedure.use(async ({ next }) => {
+  const { userId } = await auth();
+
+  if (!userId) {
+    throw new TRPCError({ code: "UNAUTHORIZED" });
+  }
+
+  return next({ ctx: { userId } });
+});

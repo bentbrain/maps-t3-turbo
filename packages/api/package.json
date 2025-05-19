@@ -20,9 +20,14 @@
   },
   "dependencies": {
     "@acme/auth": "workspace:*",
-    "@acme/db": "workspace:*",
+    "@acme/env": "workspace:*",
     "@acme/validators": "workspace:*",
+    "@clerk/nextjs": "^6.19.4",
+    "@notionhq/client": "^3.0.1",
     "@trpc/server": "catalog:",
+    "notion-client": "^7.3.0",
+    "notion-compat": "^7.3.0",
+    "notion-types": "^7.3.0",
     "superjson": "2.2.2",
     "zod": "catalog:"
   },

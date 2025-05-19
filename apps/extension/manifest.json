@@ -1,0 +1,42 @@
+{
+  "manifest_version": 3,
+  "key": "$VITE_CRX_ID",
+  "name": "Save locations to Notion",
+  "description": "Save locations to Notion",
+  "options_ui": {
+    "page": "src/pages/options/index.html"
+  },
+  "action": {
+    "default_popup": "src/pages/popup/index.html",
+    "default_icon": {
+      "32": "icon-32.png"
+    }
+  },
+  "icons": {
+    "128": "icon-128.png"
+  },
+  "permissions": ["activeTab", "tabs", "storage", "cookies"],
+  "host_permissions": [
+    "*://*.google.com/maps/*",
+    "https://api.notion.com/*",
+    "$VITE_PUBLIC_CLERK_SYNC_HOST/*",
+    "$VITE_CLERK_FRONTEND_API/*"
+  ],
+  "background": {
+    "service_worker": "src/pages/background/index.ts",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://*.google.com/maps/*"],
+      "js": ["src/pages/content/index.tsx"],
+      "css": ["contentStyle.css"]
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["contentStyle.css", "icon-128.png", "icon-32.png"],
+      "matches": ["*://*.google.com/*"]
+    }
+  ]
+}

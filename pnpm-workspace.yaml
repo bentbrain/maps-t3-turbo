@@ -18,6 +18,11 @@ catalog:
 
   # Misc
   zod: ^3.24.3
+  "lucide-react": ^0.511.0
+  "react-hook-form": ^7.56.3
+  "@types/node": ^22.15.3
+  "eslint-plugin-react-hooks": ^6.0.0-rc.1
+  "@hookform/resolvers": ^5.0.1
 
   # Tanstack & tRPC
   "@tanstack/react-query": ^5.69.0

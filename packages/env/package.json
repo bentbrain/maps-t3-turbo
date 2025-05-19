@@ -1,0 +1,30 @@
+{
+  "name": "@acme/env",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./env": "./src/env.ts"
+  },
+  "license": "MIT",
+  "scripts": {
+    "clean": "git clean -xdf .cache .turbo dist node_modules",
+    "format": "prettier --check . --ignore-path ../../.gitignore",
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit --emitDeclarationOnly false"
+  },
+  "dependencies": {
+    "@t3-oss/env-nextjs": "^0.13.4"
+  },
+  "devDependencies": {
+    "@acme/eslint-config": "workspace:*",
+    "@acme/prettier-config": "workspace:*",
+    "@acme/tsconfig": "workspace:*",
+    "eslint": "catalog:",
+    "prettier": "catalog:",
+    "typescript": "catalog:",
+    "zod": "catalog:"
+  },
+  "prettier": "@acme/prettier-config"
+}
