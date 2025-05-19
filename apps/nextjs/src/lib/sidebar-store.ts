@@ -1,115 +1,58 @@
 import type { Location } from "@/lib/get-initial-data";
-import { filterAndGroupLocations } from "@/lib/map-utils";
+import type { inferRouterOutputs } from "@trpc/server";
 import { create } from "zustand";
+
+import type { AppRouter } from "@acme/api";
 
 interface FilterState {
   property: string;
   values: string[];
 }
 
-export interface DatabaseProperty {
-  id: string;
-  type: "multi_select" | "select" | "number" | "rich_text" | "title" | "url";
-  name: string;
-  multi_select?: {
-    options: {
-      id: string;
-      name: string;
-      color: string;
-    }[];
-  };
-  select?: {
-    options: {
-      id: string;
-      name: string;
-      color: string;
-    }[];
-  };
-}
+type RouterOutput = inferRouterOutputs<AppRouter>;
 
-interface SidebarState {
-  hydrated: boolean;
-
-  locations: Location[];
-  setLocations: (locations: Location[]) => void;
-
-  selectedDatabaseId: string | null;
-  setSelectedDatabaseId: (databaseId: string | null) => void;
-
-  // Database properties state
-  databaseProperties: Record<string, DatabaseProperty>;
-  setDatabaseProperties: (properties: Record<string, DatabaseProperty>) => void;
-
-  // Filter state
-  filters: FilterState[];
-  addFilter: (property: string, values: string[]) => void;
-  removeFilter: (property: string) => void;
-  clearFilters: () => void;
-
-  // Group state
-  groupProperty: string | null;
-  groupDirection: "asc" | "desc";
-  setGroupProperty: (property: string | null) => void;
-  setGroupDirection: (direction: "asc" | "desc") => void;
-
-  // URL sync
-  syncWithUrl: () => void;
-  updateUrl: () => void;
-
-  // Helper functions
-  getFilteredAndGroupedLocations: (
-    locations: Location[],
-    filters: FilterState[],
-    groupProperty: string | null,
-    groupDirection: "asc" | "desc",
-    databaseProperties: Record<string, DatabaseProperty>,
-  ) => Location[];
-}
+export type DatabaseProperty =
+  RouterOutput["user"]["getDatabaseProperties"][number];
 
 // Helper function to update URL search params
-const updateSearchParams = (
+const updateUrl = (
   filters: FilterState[],
-  groupProperty: string | null,
-  groupDirection: "asc" | "desc",
+  groupBy: string | null,
+  direction: "asc" | "desc",
 ) => {
-  const searchParams = new URLSearchParams(window.location.search);
+  if (typeof window === "undefined") return;
 
-  // Update filter params
-  searchParams.delete("filter");
-  filters.forEach((filter) => {
-    searchParams.append(
-      "filter",
-      `${filter.property}:${filter.values.join(",")}`,
-    );
-  });
+  const params = new URLSearchParams();
 
-  // Update group params
-  if (groupProperty) {
-    searchParams.set("group", groupProperty);
-    searchParams.set("direction", groupDirection);
-  } else {
-    searchParams.delete("group");
-    searchParams.delete("direction");
+  // Add filters
+  filters.forEach((filter) =>
+    params.append("filter", `${filter.property}:${filter.values.join(",")}`),
+  );
+
+  // Add grouping
+  if (groupBy && groupBy !== "none") {
+    params.set("group", groupBy);
+    params.set("direction", direction);
   }
 
-  // Update URL without reload
   window.history.replaceState(
     {},
     "",
-    `${window.location.pathname}${searchParams.toString() ? "?" : ""}${searchParams.toString()}`,
+    `${window.location.pathname}${params.toString() ? "?" : ""}${params.toString()}`,
   );
 };
 
 // Helper function to parse URL search params
-const parseSearchParams = () => {
-  if (typeof window === "undefined")
-    return { filters: [], groupProperty: null, groupDirection: "asc" as const };
+const parseUrl = () => {
+  if (typeof window === "undefined") {
+    return { filters: [], groupBy: null, direction: "asc" as const };
+  }
 
-  const searchParams = new URLSearchParams(window.location.search);
+  const params = new URLSearchParams(window.location.search);
   const filters: FilterState[] = [];
-  const filterParams = searchParams.getAll("filter");
 
-  filterParams.forEach((param) => {
+  // Parse filters
+  params.getAll("filter").forEach((param) => {
     const [property, valuesStr] = param.split(":");
     if (property && valuesStr) {
       filters.push({
@@ -119,115 +62,94 @@ const parseSearchParams = () => {
     }
   });
 
-  const groupProperty = searchParams.get("group");
-  const directionParam = searchParams.get("direction");
-  const groupDirection =
-    directionParam === "asc" || directionParam === "desc"
-      ? directionParam
-      : "asc";
+  // Parse grouping
+  const groupBy = params.get("group");
+  const direction = params.get("direction") === "desc" ? "desc" : "asc";
 
-  return { filters, groupProperty, groupDirection };
+  return { filters, groupBy, direction };
 };
 
-export const useSidebarStore = create<SidebarState>((set, get) => ({
+interface SidebarState {
+  // Core state
+  locations: Location[];
+  databaseProperties: Record<string, DatabaseProperty>;
+
+  // Filter and sort state
+  filters: FilterState[];
+  groupBy: string | null;
+  sortDirection: "asc" | "desc";
+
+  // Actions
+  setLocations: (locations: Location[]) => void;
+  setDatabaseProperties: (properties: Record<string, DatabaseProperty>) => void;
+  updateFilter: (property: string, values: string[]) => void;
+  removeFilter: (property: string) => void;
+  clearFilters: () => void;
+  setGroupBy: (property: string | null) => void;
+  setSortDirection: (direction: "asc" | "desc") => void;
+
+  // URL sync
+  syncWithUrl: () => void;
+}
+
+export const useSidebarStore = create<SidebarState>((set) => ({
+  // Core state
   locations: [],
+  databaseProperties: {},
+
+  // Filter and sort state
+  filters: [],
+  groupBy: null,
+  sortDirection: "asc",
+
+  // Actions
   setLocations: (locations) => set({ locations }),
 
-  selectedDatabaseId: null,
-  setSelectedDatabaseId: (databaseId) =>
-    set({ selectedDatabaseId: databaseId }),
-
-  // Database properties state
-  databaseProperties: {},
   setDatabaseProperties: (properties) =>
     set({ databaseProperties: properties }),
 
-  // Filter state
-  hydrated: false,
-  filters: [],
-  addFilter: (property, values) =>
+  updateFilter: (property, values) =>
     set((state) => {
-      const newState = {
-        filters: [
-          ...state.filters.filter((f) => f.property !== property),
-          { property, values },
-        ],
-      };
-      updateSearchParams(
-        newState.filters,
-        state.groupProperty,
-        state.groupDirection,
-      );
-      return newState;
+      const newFilters = [
+        ...state.filters.filter((f) => f.property !== property),
+        { property, values },
+      ];
+      updateUrl(newFilters, state.groupBy, state.sortDirection);
+      return { filters: newFilters };
     }),
+
   removeFilter: (property) =>
     set((state) => {
-      const newState = {
-        filters: state.filters.filter((f) => f.property !== property),
-      };
-      updateSearchParams(
-        newState.filters,
-        state.groupProperty,
-        state.groupDirection,
-      );
-      return newState;
+      const newFilters = state.filters.filter((f) => f.property !== property);
+      updateUrl(newFilters, state.groupBy, state.sortDirection);
+      return { filters: newFilters };
     }),
+
   clearFilters: () =>
     set((state) => {
-      updateSearchParams([], state.groupProperty, state.groupDirection);
+      updateUrl([], state.groupBy, state.sortDirection);
       return { filters: [] };
     }),
 
-  // Group state
-  groupProperty: null,
-  groupDirection: "asc",
-  setGroupProperty: (property) =>
+  setGroupBy: (property) =>
     set((state) => {
-      if (property === "none") {
-        updateSearchParams(state.filters, null, state.groupDirection);
-      } else {
-        updateSearchParams(state.filters, property, state.groupDirection);
-      }
-      return { groupProperty: property };
+      updateUrl(state.filters, property, state.sortDirection);
+      return { groupBy: property };
     }),
-  setGroupDirection: (direction) =>
+
+  setSortDirection: (direction) =>
     set((state) => {
-      updateSearchParams(state.filters, state.groupProperty, direction);
-      return { groupDirection: direction };
+      updateUrl(state.filters, state.groupBy, direction);
+      return { sortDirection: direction };
     }),
 
   // URL sync
   syncWithUrl: () => {
-    // simulate a delay
-    setTimeout(() => {
-      const { filters, groupProperty, groupDirection } = parseSearchParams();
-      set({
-        filters,
-        groupProperty,
-        groupDirection: groupDirection as "asc" | "desc",
-        hydrated: true,
-      });
-    }, 1000);
-  },
-  updateUrl: () => {
-    const { filters, groupProperty, groupDirection } = get();
-    updateSearchParams(filters, groupProperty, groupDirection);
-  },
-
-  // Helper function to get filtered and grouped locations
-  getFilteredAndGroupedLocations: (
-    locations,
-    filters,
-    groupProperty,
-    groupDirection,
-    databaseProperties,
-  ) => {
-    return filterAndGroupLocations(
-      locations,
+    const { filters, groupBy, direction } = parseUrl();
+    set({
       filters,
-      groupProperty,
-      groupDirection,
-      databaseProperties,
-    );
+      groupBy,
+      sortDirection: direction as "asc" | "desc" | undefined,
+    });
   },
 }));

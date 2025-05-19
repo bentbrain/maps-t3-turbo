@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { redirect } from "next/navigation";
-import { useSidebarStore } from "@/lib/sidebar-store";
 import { useTRPC } from "@/trpc/react";
 import { useQuery } from "@tanstack/react-query";
 
@@ -15,7 +14,13 @@ import {
 } from "@acme/ui/select";
 import { Skeleton } from "@acme/ui/skeleton";
 
-function DatabaseSelect({ userId }: { userId?: string }) {
+function DatabaseSelect({
+  userId,
+  databaseId,
+}: {
+  userId?: string;
+  databaseId?: string;
+}) {
   const trpc = useTRPC();
   const {
     data: databases,
@@ -27,9 +32,7 @@ function DatabaseSelect({ userId }: { userId?: string }) {
   });
 
   const [open, setOpen] = useState(false);
-  const sidebarStore = useSidebarStore();
   const handleChange = (value: string) => {
-    sidebarStore.setSelectedDatabaseId(value);
     setOpen(false);
     redirect(`/${userId}/${value}`);
   };
@@ -52,7 +55,7 @@ function DatabaseSelect({ userId }: { userId?: string }) {
   return (
     <Select
       onValueChange={handleChange}
-      value={sidebarStore.selectedDatabaseId ?? undefined}
+      value={databaseId ?? undefined}
       open={open}
       onOpenChange={setOpen}
     >

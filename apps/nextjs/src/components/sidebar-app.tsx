@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { caller } from "@/trpc/server";
 
 import {
   Sidebar,
@@ -12,7 +13,18 @@ import { SidebarClientList } from "./sidebar-client-list";
 import { SidebarButtonWrapper } from "./sidebar-dynamic-wrapper";
 import { SidebarUserLocation } from "./sidebar-user-location";
 
-export function AppSidebar() {
+export async function AppSidebar({
+  params,
+}: {
+  params: Promise<{ databaseId: string; userId: string }>;
+}) {
+  const { databaseId, userId } = await params;
+
+  const properties = await caller.user.getDatabaseProperties({
+    databaseId: databaseId,
+    userId: userId,
+  });
+
   return (
     <Sidebar
       className="group-has-[.disable-layout-features]/root:hidden!"
@@ -23,7 +35,7 @@ export function AppSidebar() {
       </SidebarHeader>
       <SidebarContent className="stable-gutter">
         <Suspense fallback={<Skeleton className="h-full w-full" />}>
-          <SidebarClientList />
+          <SidebarClientList properties={properties} />
         </Suspense>
       </SidebarContent>
       <SidebarFooter>

@@ -5,10 +5,11 @@ import type { Marker } from "@googlemaps/markerclusterer";
 import { Fragment, useEffect, useRef, useState } from "react";
 import { useMapStore } from "@/lib/map-store";
 import {
-  filterAndGroupLocations,
+  filterLocations,
   getOffsetLocations,
   MAP_STYLES,
   markerIconEmojiMap,
+  sortLocations,
 } from "@/lib/map-utils";
 import { useSidebarStore } from "@/lib/sidebar-store";
 import {
@@ -258,7 +259,7 @@ function GoogleMapViewInner({
   locations,
   initialBounds,
   initialCenter,
-  databaseId,
+
   sharePage = true,
 }: Props) {
   "use memo";
@@ -266,24 +267,29 @@ function GoogleMapViewInner({
   const {
     syncWithUrl,
     setLocations,
-    setSelectedDatabaseId,
     filters,
-    groupProperty,
-    groupDirection,
+    groupBy,
+    sortDirection,
+    databaseProperties,
   } = useSidebarStore();
 
   useEffect(() => {
     setLocations(locations);
-    setSelectedDatabaseId(databaseId);
-  }, [locations, setLocations, databaseId, setSelectedDatabaseId]);
+  }, [locations, setLocations]);
 
   useEffect(() => {
     syncWithUrl();
   }, [syncWithUrl]);
 
-  const filteredLocations = getOffsetLocations(
-    filterAndGroupLocations(locations, filters, groupProperty, groupDirection),
+  // Apply filters and sorting in sequence
+  const filteredLocations = filterLocations(locations, filters);
+  const sortedLocations = sortLocations(
+    filteredLocations,
+    groupBy,
+    sortDirection,
+    databaseProperties,
   );
+  const offsetLocations = getOffsetLocations(sortedLocations);
 
   return (
     <APIProvider apiKey={env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}>
@@ -303,9 +309,9 @@ function GoogleMapViewInner({
             <UserLocationDot />
           </AdvancedMarker>
         )}
-        {filteredLocations.length > 0 && (
+        {offsetLocations.length > 0 && (
           <ClusteredMarkers
-            locations={filteredLocations}
+            locations={offsetLocations}
             activeInfoWindow={selectedMarkerId}
             onToggleInfoWindow={(isOpen, locationId) =>
               setSelectedMarkerId(isOpen ? locationId : null)

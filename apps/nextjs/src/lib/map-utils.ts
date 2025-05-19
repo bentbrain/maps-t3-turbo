@@ -73,6 +73,76 @@ interface FilterState {
   values: string[];
 }
 
+// Filter locations based on filter criteria
+export function filterLocations(
+  locations: Location[],
+  filters: FilterState[],
+): Location[] {
+  if (filters.length === 0) return locations;
+
+  return locations.filter((location) =>
+    filters.every((filter) => {
+      const option = location.filterOptions.find(
+        (opt) => opt.name === filter.property,
+      );
+      return option?.values.some((value) => filter.values.includes(value.name));
+    }),
+  );
+}
+
+// Sort locations based on a property
+export function sortLocations(
+  locations: Location[],
+  groupProperty: string | null,
+  groupDirection: "asc" | "desc",
+  databaseProperties: Record<string, DatabaseProperty>,
+): Location[] {
+  if (!groupProperty) return locations;
+
+  const groupPropertyDef = databaseProperties[groupProperty];
+  if (!groupPropertyDef) return locations;
+
+  return [...locations].sort((a, b) => {
+    const aOption = a.filterOptions.find((opt) => opt.name === groupProperty);
+    const bOption = b.filterOptions.find((opt) => opt.name === groupProperty);
+
+    // For non-multi-select fields, just compare the first value
+    const aCompare = aOption?.values[0]?.name ?? "";
+    const bCompare = bOption?.values[0]?.name ?? "";
+
+    // If we have a database property definition, use its order
+    let aIndex = -1;
+    let bIndex = -1;
+
+    if (groupPropertyDef.type === "select") {
+      aIndex = groupPropertyDef.select.options.findIndex(
+        (opt) => opt.name === aCompare,
+      );
+      bIndex = groupPropertyDef.select.options.findIndex(
+        (opt) => opt.name === bCompare,
+      );
+    } else if (groupPropertyDef.type === "multi_select") {
+      aIndex = groupPropertyDef.multi_select.options.findIndex(
+        (opt) => opt.name === aCompare,
+      );
+      bIndex = groupPropertyDef.multi_select.options.findIndex(
+        (opt) => opt.name === bCompare,
+      );
+    }
+
+    // If both values are found in the options, sort by their order
+    if (aIndex !== -1 && bIndex !== -1) {
+      return groupDirection === "asc" ? aIndex - bIndex : bIndex - aIndex;
+    }
+
+    // Fall back to alphabetical sorting if no property definition or values not found
+    return groupDirection === "asc"
+      ? aCompare.localeCompare(bCompare)
+      : bCompare.localeCompare(aCompare);
+  });
+}
+
+// Combined function for backward compatibility
 export function filterAndGroupLocations(
   locations: Location[],
   filters: FilterState[],
@@ -80,71 +150,11 @@ export function filterAndGroupLocations(
   groupDirection: "asc" | "desc",
   databaseProperties: Record<string, DatabaseProperty>,
 ): Location[] {
-  // Apply filters - using AND logic between different filter groups
-  let filteredLocations = locations;
-  if (filters.length > 0) {
-    filteredLocations = filteredLocations.filter((location) => {
-      // Location must match ALL active filter groups
-      return filters.every((filter) => {
-        const filterOption = location.filterOptions.find(
-          (opt) => opt.name === filter.property,
-        );
-
-        // If location has this property and has any included value, it matches this filter
-        return filterOption?.values.some((value) =>
-          filter.values.includes(value.name),
-        );
-      });
-    });
-  }
-
-  // Apply grouping
-  if (groupProperty) {
-    const groupPropertyDef = databaseProperties[groupProperty];
-    filteredLocations = [...filteredLocations].sort((a, b) => {
-      const aOption = a.filterOptions.find((opt) => opt.name === groupProperty);
-      const bOption = b.filterOptions.find((opt) => opt.name === groupProperty);
-
-      // For non-multi-select fields, just compare the first value
-      const aCompare = aOption?.values[0]?.name ?? "";
-      const bCompare = bOption?.values[0]?.name ?? "";
-
-      // If we have a database property definition, use its order
-      if (groupPropertyDef) {
-        let aIndex = -1;
-        let bIndex = -1;
-
-        if (groupPropertyDef.type === "select" && groupPropertyDef.select) {
-          aIndex = groupPropertyDef.select.options.findIndex(
-            (opt) => opt.name === aCompare,
-          );
-          bIndex = groupPropertyDef.select.options.findIndex(
-            (opt) => opt.name === bCompare,
-          );
-        } else if (
-          groupPropertyDef.type === "multi_select" &&
-          groupPropertyDef.multi_select
-        ) {
-          aIndex = groupPropertyDef.multi_select.options.findIndex(
-            (opt) => opt.name === aCompare,
-          );
-          bIndex = groupPropertyDef.multi_select.options.findIndex(
-            (opt) => opt.name === bCompare,
-          );
-        }
-
-        // If both values are found in the options, sort by their order
-        if (aIndex !== -1 && bIndex !== -1) {
-          return groupDirection === "asc" ? aIndex - bIndex : bIndex - aIndex;
-        }
-      }
-
-      // Fall back to alphabetical sorting if no property definition or values not found
-      return groupDirection === "asc"
-        ? aCompare.localeCompare(bCompare)
-        : bCompare.localeCompare(aCompare);
-    });
-  }
-
-  return filteredLocations;
+  const filteredLocations = filterLocations(locations, filters);
+  return sortLocations(
+    filteredLocations,
+    groupProperty,
+    groupDirection,
+    databaseProperties,
+  );
 }

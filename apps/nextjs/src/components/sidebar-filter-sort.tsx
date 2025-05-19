@@ -21,8 +21,13 @@ export function SidebarFilterSort({
   locations,
   isLoading,
 }: SidebarFilterSortProps) {
-  const { filters, addFilter, removeFilter, clearFilters, databaseProperties } =
-    useSidebarStore();
+  const {
+    filters,
+    updateFilter,
+    removeFilter,
+    clearFilters,
+    databaseProperties,
+  } = useSidebarStore();
 
   if (locations.length === 0) {
     return null;
@@ -46,8 +51,10 @@ export function SidebarFilterSort({
       type: prop.type,
       options:
         prop.type === "select"
-          ? prop.select?.options
-          : prop.multi_select?.options,
+          ? prop.select.options
+          : prop.type === "multi_select"
+            ? prop.multi_select.options
+            : [],
     }));
 
   if (allFilterOptions.length === 0) {
@@ -73,8 +80,10 @@ export function SidebarFilterSort({
         // Get all available options for this property
         const allOptionValues =
           property.type === "select"
-            ? (property.select?.options ?? [])
-            : (property.multi_select?.options ?? []);
+            ? property.select.options
+            : property.type === "multi_select"
+              ? property.multi_select.options
+              : [];
 
         const allSelected = includedValues.length === allOptionValues.length;
 
@@ -89,7 +98,7 @@ export function SidebarFilterSort({
                 onCheckedChange={(checked: boolean) => {
                   if (checked) {
                     // Include all values
-                    addFilter(
+                    updateFilter(
                       filterOption.name,
                       allOptionValues.map((v) => v.name),
                     );
@@ -118,7 +127,7 @@ export function SidebarFilterSort({
                         onCheckedChange={(checked: boolean) => {
                           if (checked) {
                             // Include by adding to included values
-                            addFilter(filterOption.name, [
+                            updateFilter(filterOption.name, [
                               ...includedValues,
                               option.name,
                             ]);
@@ -130,7 +139,10 @@ export function SidebarFilterSort({
                             if (newIncludedValues.length === 0) {
                               removeFilter(filterOption.name);
                             } else {
-                              addFilter(filterOption.name, newIncludedValues);
+                              updateFilter(
+                                filterOption.name,
+                                newIncludedValues,
+                              );
                             }
                           }
                         }}

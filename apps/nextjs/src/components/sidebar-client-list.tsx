@@ -3,11 +3,9 @@
 import type { Location } from "@/lib/get-initial-data";
 import type { DatabaseProperty } from "@/lib/sidebar-store";
 import { useEffect } from "react";
-import { useParams } from "next/navigation";
 import { useMapStore } from "@/lib/map-store";
+import { filterLocations, sortLocations } from "@/lib/map-utils";
 import { useSidebarStore } from "@/lib/sidebar-store";
-import { useTRPC } from "@/trpc/react";
-import { useQuery } from "@tanstack/react-query";
 import { Layers } from "lucide-react";
 
 import { Badge } from "@acme/ui/badge";
@@ -25,91 +23,35 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@acme/ui/sidebar";
-import { Skeleton } from "@acme/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@acme/ui/tabs";
 
 import { SidebarFilterSort } from "./sidebar-filter-sort";
 
-function SidebarSkeleton() {
-  return (
-    <div className="space-y-4 p-2">
-      {/* Tabs Skeleton */}
-      <div className="mb-2 flex gap-2">
-        <Skeleton className="h-8 w-24" />
-        <div className="relative">
-          <Skeleton className="h-8 w-24" />
-          <div className="absolute -top-2 -right-2">
-            <Skeleton className="flex h-5 w-5 items-center justify-center rounded-full">
-              <Skeleton className="h-3 w-3 rounded-full" />
-            </Skeleton>
-          </div>
-        </div>
-      </div>
-
-      {/* Group Controls Skeleton */}
-      <div className="mb-4 flex items-center gap-2 px-2">
-        <Skeleton className="h-10 w-40" /> {/* Select */}
-        <Skeleton className="h-10 w-10" /> {/* Button */}
-      </div>
-
-      {/* Groups Skeleton */}
-      <div className="space-y-6">
-        {Array.from({ length: 2 }).map((_, groupIdx) => (
-          <div key={groupIdx}>
-            {/* Group Label */}
-            <Skeleton className="mb-2 ml-2 h-5 w-24" />
-            {/* Group Items */}
-            <div className="space-y-2">
-              {Array.from({ length: 4 }).map((_, itemIdx) => (
-                <Skeleton key={itemIdx} className="h-12" />
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Filters Tab Skeleton (shown when filters tab is active) */}
-      {/* You could conditionally render a different skeleton here if you want to mimic the filters UI more closely */}
-    </div>
-  );
-}
-
 function LocationList({ locations }: { locations: Location[] }) {
   const { selectedMarkerId, focusFromSidebar } = useMapStore();
-  const {
-    getFilteredAndGroupedLocations,
-    groupProperty,
-    filters,
-    groupDirection,
-    hydrated,
-    databaseProperties,
-  } = useSidebarStore();
+  const { filters, groupBy, sortDirection, databaseProperties } =
+    useSidebarStore();
 
-  const filteredLocations = getFilteredAndGroupedLocations(
-    locations,
-    filters,
-    groupProperty,
-    groupDirection,
+  // Apply filters and sorting in sequence
+  const filteredLocations = filterLocations(locations, filters);
+  const sortedLocations = sortLocations(
+    filteredLocations,
+    groupBy,
+    sortDirection,
     databaseProperties,
   );
 
   // Check if we're grouping by a multi-select field by looking at database properties
-  const groupPropertyDef = groupProperty
-    ? databaseProperties[groupProperty]
-    : null;
+  const groupPropertyDef = groupBy ? databaseProperties[groupBy] : null;
   const isMultiSelectGroup =
     groupPropertyDef && groupPropertyDef.type === "multi_select";
-
-  if (!hydrated) {
-    return <SidebarSkeleton />;
-  }
 
   if (!isMultiSelectGroup) {
     return (
       <SidebarGroup>
         <SidebarGroupContent>
           <SidebarMenu>
-            {filteredLocations.map((location) => (
+            {sortedLocations.map((location) => (
               <SidebarMenuItem key={location.id}>
                 <SidebarMenuButton
                   className="cursor-pointer items-start"
@@ -134,23 +76,21 @@ function LocationList({ locations }: { locations: Location[] }) {
   }
 
   // Find active filter for the current group property
-  const activeFilter = filters.find((f) => f.property === groupProperty);
+  const activeFilter = filters.find((f) => f.property === groupBy);
 
   // Get all unique values for the group property from database properties
   const allValues = new Set<string>();
-  if (groupPropertyDef.multi_select?.options) {
-    groupPropertyDef.multi_select.options.forEach((option) => {
-      allValues.add(option.name);
-    });
-  }
+  groupPropertyDef.multi_select.options.forEach((option) => {
+    allValues.add(option.name);
+  });
 
   // Group locations by their values (a location can appear in multiple groups)
   const groupedLocations: Record<string, Location[]> = {};
   const otherLocations: Location[] = [];
 
-  filteredLocations.forEach((location) => {
+  sortedLocations.forEach((location) => {
     const filterOption = location.filterOptions.find(
-      (opt) => opt.name === groupProperty,
+      (opt) => opt.name === groupBy,
     );
 
     if (!filterOption || filterOption.values.length === 0) {
@@ -167,7 +107,7 @@ function LocationList({ locations }: { locations: Location[] }) {
 
   // Sort the groups alphabetically
   const sortedGroupsRaw = Object.entries(groupedLocations).sort(([a], [b]) =>
-    groupDirection === "asc" ? a.localeCompare(b) : b.localeCompare(a),
+    sortDirection === "asc" ? a.localeCompare(b) : b.localeCompare(a),
   );
 
   // Only show groups that are selected in the filter (if any)
@@ -223,48 +163,24 @@ function LocationList({ locations }: { locations: Location[] }) {
   );
 }
 
-export function SidebarClientList() {
-  const params = useParams<{ userId: string }>();
-  const trpc = useTRPC();
+export function SidebarClientList({
+  properties,
+}: {
+  properties: Record<string, DatabaseProperty>;
+}) {
   const {
     filters,
-    groupProperty,
-    setGroupProperty,
-    syncWithUrl,
-    hydrated,
-    locations,
-    selectedDatabaseId,
+    groupBy,
+    setGroupBy,
     setDatabaseProperties,
     databaseProperties,
+    locations,
   } = useSidebarStore();
-
-  // Fetch database properties
-  const { data } = useQuery({
-    ...trpc.user.getDatabaseProperties.queryOptions({
-      databaseId: selectedDatabaseId ?? "",
-      userId: params.userId,
-    }),
-    enabled: !!selectedDatabaseId && !!params.userId,
-  });
 
   // Update database properties when data changes
   useEffect(() => {
-    if (data) {
-      setDatabaseProperties(data as Record<string, DatabaseProperty>);
-    }
-  }, [data, setDatabaseProperties]);
-
-  useEffect(() => {
-    syncWithUrl();
-  }, [syncWithUrl]);
-
-  if (!hydrated) {
-    return <SidebarSkeleton />;
-  }
-
-  if (locations.length === 0) {
-    return null;
-  }
+    setDatabaseProperties(properties);
+  }, [properties, setDatabaseProperties]);
 
   // Get all available filter options from database properties
   const allFilterOptions = Object.entries(databaseProperties)
@@ -276,8 +192,10 @@ export function SidebarClientList() {
       type: prop.type,
       options:
         prop.type === "select"
-          ? prop.select?.options
-          : prop.multi_select?.options,
+          ? prop.select.options
+          : prop.type === "multi_select"
+            ? prop.multi_select.options
+            : [],
     }));
 
   // If there are no filter options, just show the simple location list
@@ -286,7 +204,7 @@ export function SidebarClientList() {
       <SidebarGroup>
         <SidebarGroupContent>
           <SidebarMenu>
-            {locations.map((location) => (
+            {locations.map((location: Location) => (
               <SidebarMenuItem key={location.id}>
                 <SidebarMenuButton
                   className="cursor-pointer items-start"
@@ -331,11 +249,11 @@ export function SidebarClientList() {
       </TabsList>
       <TabsContent className="pr-2" value="locations">
         {/* Group Controls */}
-        <Select value={groupProperty ?? ""} onValueChange={setGroupProperty}>
+        <Select value={groupBy ?? ""} onValueChange={setGroupBy}>
           <SelectTrigger className="w-full">
             <Layers className="mr-2 h-4 w-4" />
-            {groupProperty && groupProperty !== "none" ? (
-              <span className="truncate">{groupProperty}</span>
+            {groupBy && groupBy !== "none" ? (
+              <span className="truncate">{groupBy}</span>
             ) : (
               <span className="text-muted-foreground">Group by...</span>
             )}

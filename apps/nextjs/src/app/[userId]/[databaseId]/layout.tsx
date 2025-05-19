@@ -13,6 +13,7 @@ import {
   UserButton,
 } from "@clerk/nextjs";
 import { auth } from "@clerk/nextjs/server";
+import { z } from "zod";
 
 import { MultiSidebarProvider } from "@acme/ui/sidebar";
 import { Skeleton } from "@acme/ui/skeleton";
@@ -22,11 +23,13 @@ export default function RootLayout({
   params,
 }: Readonly<{
   children: React.ReactNode;
-  params: Promise<{ userId: string }>;
+  params: Promise<{ userId: string; databaseId: string }>;
 }>) {
   return (
     <MultiSidebarProvider defaultRightOpen={false}>
-      <AppSidebar />
+      <Suspense fallback={<Skeleton className="h-full w-full" />}>
+        <AppSidebar params={params} />
+      </Suspense>
       <div className="grid h-dvh w-full grid-rows-[auto_1fr]">
         <header className="bg-background grid grid-cols-[auto_1fr_auto] gap-6 p-3 group-has-[.disable-layout-features]/root:grid-cols-[auto_1fr]">
           <div className="flex justify-start">
@@ -57,15 +60,22 @@ export default function RootLayout({
 const DatabaseSelectWrapper = async ({
   params,
 }: {
-  params: Promise<{ userId: string }>;
+  params: Promise<{ userId: string; databaseId: string }>;
 }) => {
-  const { userId } = await params;
+  const { userId, databaseId } = await params;
   const { userId: clerkUserId } = await auth();
 
   if (clerkUserId !== userId) {
     redirect("/");
   }
+
+  const validDatabaseId = z.string().uuid().safeParse(databaseId);
+
+  if (!validDatabaseId.success) {
+    redirect("/");
+  }
+
   prefetch(trpc.user.getUserDatabasesFromNotion.queryOptions());
 
-  return <DatabaseSelect userId={userId} />;
+  return <DatabaseSelect userId={userId} databaseId={databaseId} />;
 };

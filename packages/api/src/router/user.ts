@@ -252,8 +252,6 @@ export const userRouter = {
         database_id: databaseId,
       });
 
-      console.dir(database.properties, { depth: Infinity });
-
       return database.properties;
     }),
 } satisfies TRPCRouterRecord;
