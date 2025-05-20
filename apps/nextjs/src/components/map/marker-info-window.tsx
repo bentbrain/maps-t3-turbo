@@ -27,7 +27,7 @@ export const MarkerInfoWindow = ({
     </div>
     <div className="flex flex-wrap gap-1">
       {location.filterOptions.map((option) =>
-        option.values.map((value) => (
+        option.values?.map((value) => (
           <Badge
             key={`${option.name}-${value.id}`}
             color={value.color as keyof typeof notionColourMap}

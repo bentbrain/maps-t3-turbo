@@ -61,8 +61,6 @@ async function fetchUserDatabases() {
   // Fetch from API directly using the plain client
   const data = await trpcClient.user.getUserDatabasesFromNotion.query();
 
-  console.log("data: ", data);
-
   await Browser.storage.local.set({
     userDatabases: data,
     lastFetched: Date.now(),
@@ -107,8 +105,6 @@ function DatabaseSelect() {
     useDataContext();
   const [open, setOpen] = React.useState(false);
   const queryClient = useQueryClient();
-
-  console.log("userDatabases from context: ", userDatabases);
 
   if (!userDatabases) {
     return <div>No databases found</div>;
@@ -158,7 +154,6 @@ function DatabaseSelect() {
       <PopoverContent className="w-72 p-0">
         <div className="flex flex-col">
           {userDatabases.map((database) => {
-            console.log("database: ", database);
             return (
               <Button
                 key={database.id}

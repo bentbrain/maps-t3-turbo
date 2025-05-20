@@ -188,7 +188,6 @@ export const pageRouter = {
     .input(z.object({ markerId: z.string().optional() }))
     .query(async ({ input }) => {
       if (!input.markerId) {
-        console.log("No markerId provided, returning null");
         return null;
       }
 

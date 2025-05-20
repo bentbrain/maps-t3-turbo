@@ -13,7 +13,8 @@ export interface SelectValue {
 
 interface FilterOption {
   name: string;
-  values: SelectValue[];
+  values?: SelectValue[];
+  value?: number;
 }
 
 export interface Location {
@@ -26,6 +27,7 @@ export interface Location {
   notionUrl: string;
   icon: string | null;
   filterOptions: FilterOption[];
+  properties: Record<string, { type: string; number?: number }>;
 }
 
 export interface MapBounds {
@@ -181,9 +183,10 @@ export const getInitialData = async ({
               notionUrl: getNotionUrl(property.id),
               icon: typeof property.icon === "string" ? property.icon : null,
               filterOptions: [],
+              properties: {},
             };
 
-            // Dynamically add all select and multi-select properties
+            // Dynamically add all select, multi-select, and number properties
             for (const [key, value] of Object.entries(props)) {
               if (value.type === "multi_select") {
                 location.filterOptions.push({
@@ -204,6 +207,11 @@ export const getInitialData = async ({
                       id: value.select.id,
                     },
                   ],
+                });
+              } else if (value.type === "number") {
+                location.filterOptions.push({
+                  name: key,
+                  value: value.number ?? undefined,
                 });
               }
             }

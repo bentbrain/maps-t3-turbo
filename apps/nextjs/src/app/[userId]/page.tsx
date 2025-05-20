@@ -15,7 +15,7 @@ import { Loader2 } from "lucide-react";
 function Page({ params }: { params: Promise<{ userId: string }> }) {
   return (
     <PageLayout>
-      <main className="disable-layout-features grid w-full place-items-center">
+      <main className="grid w-full place-items-center">
         <div className="flex h-full w-full items-center justify-center p-4">
           <Suspense
             fallback={

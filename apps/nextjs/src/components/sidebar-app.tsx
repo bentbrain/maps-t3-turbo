@@ -45,10 +45,7 @@ export async function AppSidebar({
   }
 
   return (
-    <Sidebar
-      className="group-has-[.disable-layout-features]/root:hidden!"
-      side="left"
-    >
+    <Sidebar side="left">
       <SidebarHeader>
         <SidebarUserLocation />
       </SidebarHeader>

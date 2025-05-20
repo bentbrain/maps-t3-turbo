@@ -179,8 +179,6 @@ export function PageSidebar() {
     trpc.page.getPage.queryOptions({ markerId: selectedMarkerId ?? "" }),
   );
 
-  console.log(rightSidebar.open);
-
   React.useEffect(() => {
     if (!selectedMarkerId && rightSidebar.open) {
       rightSidebar.toggleSidebar();

@@ -5,7 +5,10 @@ import type { AppRouter } from "@acme/api";
 
 interface FilterState {
   property: string;
+  type: "select" | "number";
   values: string[];
+  operator?: "gt" | "lt";
+  value?: number;
 }
 
 type RouterOutput = inferRouterOutputs<AppRouter>;
@@ -14,25 +17,25 @@ export type DatabaseProperty =
   RouterOutput["user"]["getDatabaseProperties"][number];
 
 // Helper function to update URL search params
-const updateUrl = (
-  filters: FilterState[],
-  groupBy: string | null,
-  direction: "asc" | "desc",
-) => {
+const updateUrl = (filters: FilterState[], direction: "asc" | "desc") => {
   if (typeof window === "undefined") return;
 
   const params = new URLSearchParams();
 
   // Add filters
-  filters.forEach((filter) =>
-    params.append("filter", `${filter.property}:${filter.values.join(",")}`),
-  );
+  filters.forEach((filter) => {
+    if (filter.type === "select") {
+      params.append("filter", `${filter.property}:${filter.values.join(",")}`);
+    } else {
+      params.append(
+        "filter",
+        `${filter.property}:${filter.operator}:${filter.value}`,
+      );
+    }
+  });
 
-  // Add grouping
-  if (groupBy && groupBy !== "none") {
-    params.set("group", groupBy);
-    params.set("direction", direction);
-  }
+  // Add direction
+  params.set("direction", direction);
 
   window.history.replaceState(
     {},
@@ -44,7 +47,7 @@ const updateUrl = (
 // Helper function to parse URL search params
 const parseUrl = () => {
   if (typeof window === "undefined") {
-    return { filters: [], groupBy: null, direction: "asc" as const };
+    return { filters: [], direction: "asc" as const };
   }
 
   const params = new URLSearchParams(window.location.search);
@@ -52,33 +55,55 @@ const parseUrl = () => {
 
   // Parse filters
   params.getAll("filter").forEach((param) => {
-    const [property, valuesStr] = param.split(":");
-    if (property && valuesStr) {
-      filters.push({
-        property,
-        values: valuesStr.split(","),
-      });
+    const parts = param.split(":");
+    if (parts.length === 2) {
+      // Select filter
+      const [property, valuesStr] = parts;
+      if (property && valuesStr) {
+        filters.push({
+          property,
+          type: "select" as const,
+          values: valuesStr.split(","),
+        });
+      }
+    } else if (parts.length === 3) {
+      // Number filter
+      const [property, operator, valueStr] = parts;
+      if (property && (operator === "gt" || operator === "lt") && valueStr) {
+        const value = parseFloat(valueStr);
+        if (!isNaN(value)) {
+          filters.push({
+            property,
+            type: "number" as const,
+            values: [],
+            operator,
+            value,
+          });
+        }
+      }
     }
   });
 
-  // Parse grouping
-  const groupBy = params.get("group");
+  // Parse direction
   const direction = params.get("direction") === "desc" ? "desc" : "asc";
 
-  return { filters, groupBy, direction };
+  return { filters, direction };
 };
 
 interface SidebarState {
   // Filter and sort state
   filters: FilterState[];
-  groupBy: string | null;
   sortDirection: "asc" | "desc";
 
   // Actions
   updateFilter: (property: string, values: string[]) => void;
+  updateNumberFilter: (
+    property: string,
+    operator: "gt" | "lt",
+    value: number,
+  ) => void;
   removeFilter: (property: string) => void;
   clearFilters: () => void;
-  setGroupBy: (property: string | null) => void;
   setSortDirection: (direction: "asc" | "desc") => void;
 
   // URL sync
@@ -91,7 +116,6 @@ export const useSidebarStore = create<SidebarState>((set) => ({
 
   // Filter and sort state
   filters: [],
-  groupBy: null,
   sortDirection: "asc",
 
   // Actions
@@ -99,43 +123,46 @@ export const useSidebarStore = create<SidebarState>((set) => ({
     set((state) => {
       const newFilters = [
         ...state.filters.filter((f) => f.property !== property),
-        { property, values },
+        { property, type: "select" as const, values },
       ];
-      updateUrl(newFilters, state.groupBy, state.sortDirection);
+      updateUrl(newFilters, state.sortDirection);
+      return { filters: newFilters };
+    }),
+
+  updateNumberFilter: (property, operator, value) =>
+    set((state) => {
+      const newFilters = [
+        ...state.filters.filter((f) => f.property !== property),
+        { property, type: "number" as const, values: [], operator, value },
+      ];
+      updateUrl(newFilters, state.sortDirection);
       return { filters: newFilters };
     }),
 
   removeFilter: (property) =>
     set((state) => {
       const newFilters = state.filters.filter((f) => f.property !== property);
-      updateUrl(newFilters, state.groupBy, state.sortDirection);
+      updateUrl(newFilters, state.sortDirection);
       return { filters: newFilters };
     }),
 
   clearFilters: () =>
     set((state) => {
-      updateUrl([], state.groupBy, state.sortDirection);
+      updateUrl([], state.sortDirection);
       return { filters: [] };
-    }),
-
-  setGroupBy: (property) =>
-    set((state) => {
-      updateUrl(state.filters, property, state.sortDirection);
-      return { groupBy: property };
     }),
 
   setSortDirection: (direction) =>
     set((state) => {
-      updateUrl(state.filters, state.groupBy, direction);
+      updateUrl(state.filters, direction);
       return { sortDirection: direction };
     }),
 
   // URL sync
   syncWithUrl: () => {
-    const { filters, groupBy, direction } = parseUrl();
+    const { filters, direction } = parseUrl();
     set({
       filters,
-      groupBy,
       sortDirection: direction as "asc" | "desc" | undefined,
     });
   },

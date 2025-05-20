@@ -3,6 +3,14 @@ import { DatabaseProperty, useSidebarStore } from "@/lib/sidebar-store";
 import { CircleMinus, Loader2 } from "lucide-react";
 
 import { Button } from "@acme/ui/button";
+import { Input } from "@acme/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@acme/ui/select";
 import {
   SidebarGroup,
   SidebarGroupContent,
@@ -23,8 +31,13 @@ export function SidebarFilterSort({
   databaseProperties,
   isLoading,
 }: SidebarFilterSortProps) {
-  const { filters, updateFilter, removeFilter, clearFilters } =
-    useSidebarStore();
+  const {
+    filters,
+    updateFilter,
+    updateNumberFilter,
+    removeFilter,
+    clearFilters,
+  } = useSidebarStore();
 
   if (locations.length === 0) {
     return null;
@@ -41,7 +54,11 @@ export function SidebarFilterSort({
   // Get all available filter options from database properties
   const allFilterOptions = Object.entries(databaseProperties)
     .filter(
-      ([_, prop]) => prop.type === "select" || prop.type === "multi_select",
+      ([key, prop]) =>
+        !["Latitude", "Longitude"].includes(key) &&
+        (prop.type === "select" ||
+          prop.type === "multi_select" ||
+          prop.type === "number"),
     )
     .map(([key, prop]) => ({
       name: key,
@@ -68,6 +85,65 @@ export function SidebarFilterSort({
         const currentFilter = filters.find(
           (f) => f.property === filterOption.name,
         );
+
+        if (filterOption.type === "number") {
+          return (
+            <SidebarGroup key={filterOption.name}>
+              <SidebarGroupLabel className="flex w-full items-center justify-between gap-2 pr-0">
+                <span className="w-full truncate">{filterOption.name}</span>
+                {currentFilter && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removeFilter(filterOption.name)}
+                  >
+                    <CircleMinus className="h-4 w-4" />
+                  </Button>
+                )}
+              </SidebarGroupLabel>
+              <SidebarGroupContent className="space-y-2 pl-2">
+                <div className="grid grid-cols-[auto_1fr] gap-2">
+                  <Select
+                    value={currentFilter?.operator ?? "gt"}
+                    onValueChange={(value: "gt" | "lt") => {
+                      if (currentFilter?.value !== undefined) {
+                        updateNumberFilter(
+                          filterOption.name,
+                          value,
+                          currentFilter.value,
+                        );
+                      }
+                    }}
+                  >
+                    <SelectTrigger className="w-[100px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="gt">Greater than</SelectItem>
+                      <SelectItem value="lt">Less than</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Input
+                    type="number"
+                    value={currentFilter?.value ?? ""}
+                    onChange={(e) => {
+                      const value = parseFloat(e.target.value);
+                      if (!isNaN(value)) {
+                        updateNumberFilter(
+                          filterOption.name,
+                          currentFilter?.operator ?? "gt",
+                          value,
+                        );
+                      }
+                    }}
+                    placeholder="Enter value..."
+                  />
+                </div>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          );
+        }
+
         const includedValues = currentFilter?.values ?? [];
 
         // Get the property definition

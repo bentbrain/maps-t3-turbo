@@ -191,7 +191,7 @@ function MultiSidebarProvider({
             } as React.CSSProperties
           }
           className={cn(
-            "group/sidebar-wrapper has-data-[variant=inset]:bg-sidebar flex min-h-svh w-full group-has-[.disable-layout-features]/root:[--sidebar-width:0px]!",
+            "group/sidebar-wrapper has-data-[variant=inset]:bg-sidebar flex min-h-svh w-full",
             className,
           )}
           {...props}

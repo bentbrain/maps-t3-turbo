@@ -1,5 +1,5 @@
+import type { Location } from "@/lib/get-initial-data";
 import type { DatabaseProperty } from "@/lib/sidebar-store";
-import type { Location } from "@/types/map";
 import type { Marker } from "@googlemaps/markerclusterer";
 
 // Map styles to hide road labels
@@ -70,7 +70,10 @@ export const hash = (str: string) => {
 
 interface FilterState {
   property: string;
+  type: "select" | "number";
   values: string[];
+  operator?: "gt" | "lt";
+  value?: number;
 }
 
 // Filter locations based on filter criteria
@@ -82,10 +85,27 @@ export function filterLocations(
 
   return locations.filter((location) =>
     filters.every((filter) => {
-      const option = location.filterOptions.find(
-        (opt) => opt.name === filter.property,
-      );
-      return option?.values.some((value) => filter.values.includes(value.name));
+      if (filter.type === "select") {
+        const option = location.filterOptions.find(
+          (opt) => opt.name === filter.property,
+        );
+        return option?.values?.some((value) =>
+          filter.values.includes(value.name),
+        );
+      } else {
+        // Number filter
+        const numberValue = location.filterOptions.find(
+          (opt) => opt.name === filter.property,
+        )?.value;
+        if (typeof numberValue !== "number") return false;
+
+        if (filter.operator === "gt") {
+          return numberValue > (filter.value ?? 0);
+        } else if (filter.operator === "lt") {
+          return numberValue < (filter.value ?? 0);
+        }
+        return false;
+      }
     }),
   );
 }
@@ -107,8 +127,8 @@ export function sortLocations(
     const bOption = b.filterOptions.find((opt) => opt.name === groupProperty);
 
     // For non-multi-select fields, just compare the first value
-    const aCompare = aOption?.values[0]?.name ?? "";
-    const bCompare = bOption?.values[0]?.name ?? "";
+    const aCompare = aOption?.values?.[0]?.name ?? "";
+    const bCompare = bOption?.values?.[0]?.name ?? "";
 
     // If we have a database property definition, use its order
     let aIndex = -1;

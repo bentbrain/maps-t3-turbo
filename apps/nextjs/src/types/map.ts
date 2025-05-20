@@ -16,18 +16,6 @@ export interface FilterOption {
   }[];
 }
 
-export interface Location {
-  id: string;
-  name: string;
-  lat: number;
-  lng: number;
-  icon: string | null;
-  notionUrl: string;
-  website: string | null;
-  address: string;
-  filterOptions: FilterOption[];
-}
-
 export interface MarkerPosition {
   lat: number;
   lng: number;

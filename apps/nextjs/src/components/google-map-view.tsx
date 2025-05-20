@@ -10,7 +10,6 @@ import {
   getOffsetLocations,
   MAP_STYLES,
   markerIconEmojiMap,
-  sortLocations,
 } from "@/lib/map-utils";
 import { useSidebarStore } from "@/lib/sidebar-store";
 import {
@@ -242,12 +241,11 @@ export default function GoogleMapView({
   locations,
   initialBounds,
   initialCenter,
-  databaseProperties,
   sharePage = true,
 }: Props) {
   "use memo";
   const { selectedMarkerId, setSelectedMarkerId, userLocation } = useMapStore();
-  const { syncWithUrl, filters, groupBy, sortDirection } = useSidebarStore();
+  const { syncWithUrl, filters } = useSidebarStore();
 
   useEffect(() => {
     syncWithUrl();
@@ -255,13 +253,7 @@ export default function GoogleMapView({
 
   // Apply filters and sorting in sequence
   const filteredLocations = filterLocations(locations, filters);
-  const sortedLocations = sortLocations(
-    filteredLocations,
-    groupBy,
-    sortDirection,
-    databaseProperties,
-  );
-  const offsetLocations = getOffsetLocations(sortedLocations);
+  const offsetLocations = getOffsetLocations(filteredLocations);
 
   return (
     <APIProvider apiKey={env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}>

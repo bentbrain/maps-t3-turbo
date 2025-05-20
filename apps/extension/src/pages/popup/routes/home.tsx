@@ -6,7 +6,6 @@ import LocationForm from "../location-form";
 
 export const Home = () => {
   const websiteUrl = import.meta.env.VITE_WEBSITE_URL;
-  console.log(websiteUrl);
 
   return (
     <>

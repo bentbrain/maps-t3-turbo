@@ -2,6 +2,7 @@
 
 import type { Location } from "@/lib/get-initial-data";
 import type { DatabaseProperty } from "@/lib/sidebar-store";
+import { useState } from "react";
 import { useMapStore } from "@/lib/map-store";
 import { filterLocations, sortLocations } from "@/lib/map-utils";
 import { useSidebarStore } from "@/lib/sidebar-store";
@@ -29,12 +30,14 @@ import { SidebarFilterSort } from "./sidebar-filter-sort";
 function LocationList({
   locations,
   databaseProperties,
+  groupBy,
 }: {
   locations: Location[];
   databaseProperties: Record<string, DatabaseProperty>;
+  groupBy: string | null;
 }) {
   const { selectedMarkerId, focusFromSidebar } = useMapStore();
-  const { filters, groupBy, sortDirection } = useSidebarStore();
+  const { filters, sortDirection } = useSidebarStore();
 
   // Apply filters and sorting in sequence
   const filteredLocations = filterLocations(locations, filters);
@@ -45,12 +48,14 @@ function LocationList({
     databaseProperties,
   );
 
-  // Check if we're grouping by a multi-select field by looking at database properties
+  // Check if we're grouping by a select or multi-select field
   const groupPropertyDef = groupBy ? databaseProperties[groupBy] : null;
-  const isMultiSelectGroup =
-    groupPropertyDef && groupPropertyDef.type === "multi_select";
 
-  if (!isMultiSelectGroup) {
+  if (
+    !groupPropertyDef ||
+    (groupPropertyDef.type !== "select" &&
+      groupPropertyDef.type !== "multi_select")
+  ) {
     return (
       <SidebarGroup>
         <SidebarGroupContent>
@@ -82,13 +87,7 @@ function LocationList({
   // Find active filter for the current group property
   const activeFilter = filters.find((f) => f.property === groupBy);
 
-  // Get all unique values for the group property from database properties
-  const allValues = new Set<string>();
-  groupPropertyDef.multi_select.options.forEach((option) => {
-    allValues.add(option.name);
-  });
-
-  // Group locations by their values (a location can appear in multiple groups)
+  // Group locations by their values (a location can appear in multiple groups for multi-select)
   const groupedLocations: Record<string, Location[]> = {};
   const otherLocations: Location[] = [];
 
@@ -97,10 +96,20 @@ function LocationList({
       (opt) => opt.name === groupBy,
     );
 
-    if (!filterOption || filterOption.values.length === 0) {
+    const values = filterOption?.values;
+    if (!values?.length) {
       otherLocations.push(location);
+      return;
+    }
+
+    if (groupPropertyDef.type === "multi_select") {
+      // For multi-select, add to all matching groups
+      values.forEach((value) => {
+        const key = value.name;
+        groupedLocations[key] ??= [];
+        groupedLocations[key].push(location);
+      });
     } else {
-      const values = filterOption.values;
       values.forEach((value) => {
         const key = value.name;
         groupedLocations[key] ??= [];
@@ -174,7 +183,8 @@ export function SidebarClientList({
   properties: Record<string, DatabaseProperty>;
   locations: Location[];
 }) {
-  const { filters, groupBy, setGroupBy } = useSidebarStore();
+  const { filters } = useSidebarStore();
+  const [groupBy, setGroupBy] = useState<string | null>(null);
 
   // Get all available filter options from database properties
   const allFilterOptions = Object.entries(properties)
@@ -243,10 +253,13 @@ export function SidebarClientList({
       </TabsList>
       <TabsContent className="pr-2" value="locations">
         {/* Group Controls */}
-        <Select value={groupBy ?? ""} onValueChange={setGroupBy}>
+        <Select
+          value={groupBy ?? "none"}
+          onValueChange={(value) => setGroupBy(value === "none" ? null : value)}
+        >
           <SelectTrigger className="w-full">
             <Layers className="mr-2 h-4 w-4" />
-            {groupBy && groupBy !== "none" ? (
+            {groupBy ? (
               <span className="truncate">{groupBy}</span>
             ) : (
               <span className="text-muted-foreground">Group by...</span>
@@ -262,7 +275,11 @@ export function SidebarClientList({
           </SelectContent>
         </Select>
 
-        <LocationList locations={locations} databaseProperties={properties} />
+        <LocationList
+          locations={locations}
+          databaseProperties={properties}
+          groupBy={groupBy}
+        />
       </TabsContent>
       <TabsContent className="pr-2" value="filters">
         <SidebarFilterSort

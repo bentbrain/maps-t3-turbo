@@ -27,11 +27,11 @@ export default function RootLayout({
 }>) {
   return (
     <MultiSidebarProvider defaultRightOpen={false}>
-      <Suspense fallback={<Skeleton className="h-full w-full" />}>
+      <Suspense>
         <AppSidebar params={params} />
       </Suspense>
       <div className="grid h-dvh w-full grid-rows-[auto_1fr]">
-        <header className="bg-background grid grid-cols-[auto_1fr_auto] gap-6 p-3 group-has-[.disable-layout-features]/root:grid-cols-[auto_1fr]">
+        <header className="bg-background grid grid-cols-[auto_1fr_auto] gap-6 p-3">
           <div className="flex justify-start">
             <RightSidebarTrigger />
           </div>

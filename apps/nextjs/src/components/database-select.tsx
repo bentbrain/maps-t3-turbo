@@ -45,7 +45,7 @@ function DatabaseSelect({
     console.error("Error loading databases:", error);
     return (
       <Select disabled>
-        <SelectTrigger className="mx-auto w-full max-w-sm group-has-[.disable-layout-features]/root:hidden">
+        <SelectTrigger className="mx-auto w-full max-w-sm">
           <SelectValue placeholder="Error loading databases" />
         </SelectTrigger>
       </Select>
@@ -59,7 +59,7 @@ function DatabaseSelect({
       open={open}
       onOpenChange={setOpen}
     >
-      <SelectTrigger className="mx-auto w-full max-w-sm group-has-[.disable-layout-features]/root:hidden">
+      <SelectTrigger className="mx-auto w-full max-w-sm">
         <SelectValue placeholder="Select a database" />
       </SelectTrigger>
       <SelectContent>
