@@ -1,7 +1,6 @@
 "use client";
 
 import { useMapStore } from "@/lib/map-store";
-import { useSidebarStore } from "@/lib/sidebar-store";
 import { LocateFixed } from "lucide-react";
 import { toast } from "sonner";
 
@@ -9,11 +8,6 @@ import { Button } from "@acme/ui/button";
 
 export function SidebarUserLocation() {
   const { userLocation, focusUserLocation, setUserLocation } = useMapStore();
-  const { selectedDatabaseId } = useSidebarStore();
-
-  if (!selectedDatabaseId) {
-    return null;
-  }
 
   const handleClick = () => {
     if (userLocation) {

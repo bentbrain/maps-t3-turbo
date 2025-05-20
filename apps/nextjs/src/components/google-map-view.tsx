@@ -1,6 +1,7 @@
 "use client";
 
 import type { Location, MapBounds } from "@/lib/get-initial-data";
+import type { DatabaseProperty } from "@/lib/sidebar-store";
 import type { Marker } from "@googlemaps/markerclusterer";
 import { Fragment, useEffect, useRef, useState } from "react";
 import { useMapStore } from "@/lib/map-store";
@@ -37,7 +38,7 @@ interface Props {
   locations: Location[];
   initialBounds: MapBounds;
   initialCenter: { lat: number; lng: number };
-  databaseId: string;
+  databaseProperties: Record<string, DatabaseProperty>;
   sharePage?: boolean;
 }
 
@@ -241,41 +242,12 @@ export default function GoogleMapView({
   locations,
   initialBounds,
   initialCenter,
-  databaseId,
-  sharePage = true,
-}: Props) {
-  return (
-    <GoogleMapViewInner
-      locations={locations}
-      initialBounds={initialBounds}
-      initialCenter={initialCenter}
-      databaseId={databaseId}
-      sharePage={sharePage}
-    />
-  );
-}
-
-function GoogleMapViewInner({
-  locations,
-  initialBounds,
-  initialCenter,
-
+  databaseProperties,
   sharePage = true,
 }: Props) {
   "use memo";
   const { selectedMarkerId, setSelectedMarkerId, userLocation } = useMapStore();
-  const {
-    syncWithUrl,
-    setLocations,
-    filters,
-    groupBy,
-    sortDirection,
-    databaseProperties,
-  } = useSidebarStore();
-
-  useEffect(() => {
-    setLocations(locations);
-  }, [locations, setLocations]);
+  const { syncWithUrl, filters, groupBy, sortDirection } = useSidebarStore();
 
   useEffect(() => {
     syncWithUrl();

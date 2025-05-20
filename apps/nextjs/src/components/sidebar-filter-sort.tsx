@@ -1,5 +1,5 @@
 import type { Location } from "@/lib/get-initial-data";
-import { useSidebarStore } from "@/lib/sidebar-store";
+import { DatabaseProperty, useSidebarStore } from "@/lib/sidebar-store";
 import { CircleMinus, Loader2 } from "lucide-react";
 
 import { Button } from "@acme/ui/button";
@@ -14,20 +14,17 @@ import { Switch } from "@acme/ui/switch";
 
 interface SidebarFilterSortProps {
   locations: Location[];
+  databaseProperties: Record<string, DatabaseProperty>;
   isLoading?: boolean;
 }
 
 export function SidebarFilterSort({
   locations,
+  databaseProperties,
   isLoading,
 }: SidebarFilterSortProps) {
-  const {
-    filters,
-    updateFilter,
-    removeFilter,
-    clearFilters,
-    databaseProperties,
-  } = useSidebarStore();
+  const { filters, updateFilter, removeFilter, clearFilters } =
+    useSidebarStore();
 
   if (locations.length === 0) {
     return null;

@@ -5,7 +5,7 @@ import { notFound } from "next/navigation";
 import GoogleMapView from "@/components/google-map-view";
 import RetryButton from "@/components/retry-button";
 import { getInitialData, getNotionUrl } from "@/lib/get-initial-data";
-import { prefetch, trpc } from "@/trpc/server";
+import { caller, prefetch, trpc } from "@/trpc/server";
 import { auth } from "@clerk/nextjs/server";
 import { AlertCircle, Loader2 } from "lucide-react";
 import { z } from "zod";
@@ -77,12 +77,17 @@ async function DynamicParts({
     return <ErrorPage databaseId={databaseId} />;
   }
 
+  const properties = await caller.user.getDatabaseProperties({
+    databaseId: databaseId,
+    userId: userId,
+  });
+
   return (
     <GoogleMapView
       locations={result.locations}
       initialBounds={result.initialBounds}
       initialCenter={result.initialCenter}
-      databaseId={databaseId}
+      databaseProperties={properties}
       sharePage={false}
     />
   );

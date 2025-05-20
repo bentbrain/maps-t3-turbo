@@ -1,4 +1,3 @@
-import type { Location } from "@/lib/get-initial-data";
 import type { inferRouterOutputs } from "@trpc/server";
 import { create } from "zustand";
 
@@ -70,18 +69,12 @@ const parseUrl = () => {
 };
 
 interface SidebarState {
-  // Core state
-  locations: Location[];
-  databaseProperties: Record<string, DatabaseProperty>;
-
   // Filter and sort state
   filters: FilterState[];
   groupBy: string | null;
   sortDirection: "asc" | "desc";
 
   // Actions
-  setLocations: (locations: Location[]) => void;
-  setDatabaseProperties: (properties: Record<string, DatabaseProperty>) => void;
   updateFilter: (property: string, values: string[]) => void;
   removeFilter: (property: string) => void;
   clearFilters: () => void;
@@ -95,7 +88,6 @@ interface SidebarState {
 export const useSidebarStore = create<SidebarState>((set) => ({
   // Core state
   locations: [],
-  databaseProperties: {},
 
   // Filter and sort state
   filters: [],
@@ -103,11 +95,6 @@ export const useSidebarStore = create<SidebarState>((set) => ({
   sortDirection: "asc",
 
   // Actions
-  setLocations: (locations) => set({ locations }),
-
-  setDatabaseProperties: (properties) =>
-    set({ databaseProperties: properties }),
-
   updateFilter: (property, values) =>
     set((state) => {
       const newFilters = [

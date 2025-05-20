@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { DatabaseList } from "@/components/database-list";
-import { prefetch, trpc } from "@/trpc/server";
+import { caller } from "@/trpc/server";
 import {
   SignedIn,
   SignedOut,
@@ -43,10 +43,13 @@ const DynamicParts = async ({
   if (userId !== clerkUserId) {
     redirect(`/`);
   }
+  const databases = await caller.user.getUserDatabasesFromNotion();
 
-  prefetch(trpc.user.getUserDatabasesFromNotion.queryOptions());
+  if (databases.length === 1) {
+    redirect(`/${userId}/${databases[0]?.id}`);
+  }
 
-  return <DatabaseList userId={userId} />;
+  return <DatabaseList databases={databases} userId={userId} />;
 };
 
 const PageLayout = ({ children }: { children: React.ReactNode }) => {

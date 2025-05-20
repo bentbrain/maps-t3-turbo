@@ -179,6 +179,8 @@ export function PageSidebar() {
     trpc.page.getPage.queryOptions({ markerId: selectedMarkerId ?? "" }),
   );
 
+  console.log(rightSidebar.open);
+
   React.useEffect(() => {
     if (!selectedMarkerId && rightSidebar.open) {
       rightSidebar.toggleSidebar();
@@ -213,7 +215,7 @@ export function PageSidebar() {
           <h2 className="text-lg font-extrabold @sm:text-2xl">{page.title}</h2>
         </div>
         <Button
-          onClick={() => rightSidebar.setOpen(false)}
+          onClick={() => rightSidebar.toggleSidebar()}
           variant="ghost"
           size="icon"
           className="aspect-square w-full"

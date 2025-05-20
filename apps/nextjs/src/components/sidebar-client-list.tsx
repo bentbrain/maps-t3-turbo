@@ -2,7 +2,6 @@
 
 import type { Location } from "@/lib/get-initial-data";
 import type { DatabaseProperty } from "@/lib/sidebar-store";
-import { useEffect } from "react";
 import { useMapStore } from "@/lib/map-store";
 import { filterLocations, sortLocations } from "@/lib/map-utils";
 import { useSidebarStore } from "@/lib/sidebar-store";
@@ -27,10 +26,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@acme/ui/tabs";
 
 import { SidebarFilterSort } from "./sidebar-filter-sort";
 
-function LocationList({ locations }: { locations: Location[] }) {
+function LocationList({
+  locations,
+  databaseProperties,
+}: {
+  locations: Location[];
+  databaseProperties: Record<string, DatabaseProperty>;
+}) {
   const { selectedMarkerId, focusFromSidebar } = useMapStore();
-  const { filters, groupBy, sortDirection, databaseProperties } =
-    useSidebarStore();
+  const { filters, groupBy, sortDirection } = useSidebarStore();
 
   // Apply filters and sorting in sequence
   const filteredLocations = filterLocations(locations, filters);
@@ -165,25 +169,15 @@ function LocationList({ locations }: { locations: Location[] }) {
 
 export function SidebarClientList({
   properties,
+  locations,
 }: {
   properties: Record<string, DatabaseProperty>;
+  locations: Location[];
 }) {
-  const {
-    filters,
-    groupBy,
-    setGroupBy,
-    setDatabaseProperties,
-    databaseProperties,
-    locations,
-  } = useSidebarStore();
-
-  // Update database properties when data changes
-  useEffect(() => {
-    setDatabaseProperties(properties);
-  }, [properties, setDatabaseProperties]);
+  const { filters, groupBy, setGroupBy } = useSidebarStore();
 
   // Get all available filter options from database properties
-  const allFilterOptions = Object.entries(databaseProperties)
+  const allFilterOptions = Object.entries(properties)
     .filter(
       ([_, prop]) => prop.type === "select" || prop.type === "multi_select",
     )
@@ -268,10 +262,13 @@ export function SidebarClientList({
           </SelectContent>
         </Select>
 
-        <LocationList locations={locations} />
+        <LocationList locations={locations} databaseProperties={properties} />
       </TabsContent>
       <TabsContent className="pr-2" value="filters">
-        <SidebarFilterSort locations={locations} />
+        <SidebarFilterSort
+          databaseProperties={properties}
+          locations={locations}
+        />
       </TabsContent>
     </Tabs>
   );

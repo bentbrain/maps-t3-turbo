@@ -1,4 +1,6 @@
 import { Suspense } from "react";
+import { unstable_cache as cache } from "next/cache";
+import { getInitialData } from "@/lib/get-initial-data";
 import { caller } from "@/trpc/server";
 
 import {
@@ -25,6 +27,23 @@ export async function AppSidebar({
     userId: userId,
   });
 
+  const cachedResult = cache(
+    async () => {
+      const result = await getInitialData({ databaseId });
+      return result;
+    },
+    [databaseId],
+    {
+      tags: [databaseId],
+    },
+  );
+
+  const result = await cachedResult();
+
+  if (!result.success) {
+    return null;
+  }
+
   return (
     <Sidebar
       className="group-has-[.disable-layout-features]/root:hidden!"
@@ -35,7 +54,10 @@ export async function AppSidebar({
       </SidebarHeader>
       <SidebarContent className="stable-gutter">
         <Suspense fallback={<Skeleton className="h-full w-full" />}>
-          <SidebarClientList properties={properties} />
+          <SidebarClientList
+            locations={result.locations}
+            properties={properties}
+          />
         </Suspense>
       </SidebarContent>
       <SidebarFooter>
@@ -47,7 +69,7 @@ export async function AppSidebar({
             </div>
           }
         >
-          <SidebarButtonWrapper />
+          <SidebarButtonWrapper databaseId={databaseId} />
         </Suspense>
       </SidebarFooter>
     </Sidebar>
