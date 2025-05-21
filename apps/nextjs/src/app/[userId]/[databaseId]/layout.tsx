@@ -1,9 +1,12 @@
 import { Suspense } from "react";
+import { unstable_cache as cache } from "next/cache";
 import { redirect } from "next/navigation";
 import DatabaseSelect from "@/components/database-select";
+import SearchBar from "@/components/search-bar";
 import { AppSidebar } from "@/components/sidebar-app";
 import { RightSidebarTrigger } from "@/components/sidebar-dynamic-wrapper";
 import { PageSidebar } from "@/components/sidebar-page";
+import { getInitialData } from "@/lib/get-initial-data";
 import { prefetch, trpc } from "@/trpc/server";
 import {
   SignedIn,
@@ -35,11 +38,18 @@ export default function RootLayout({
           <div className="flex justify-start">
             <RightSidebarTrigger />
           </div>
-          <Suspense
-            fallback={<Skeleton className="mx-auto h-9 w-full max-w-sm" />}
-          >
-            <DatabaseSelectWrapper params={params} />
-          </Suspense>
+          <div className="flex gap-2">
+            <Suspense
+              fallback={<Skeleton className="mx-auto h-9 w-full max-w-sm" />}
+            >
+              <DatabaseSelectWrapper params={params} />
+            </Suspense>
+            <Suspense
+              fallback={<Skeleton className="mx-auto h-9 w-full max-w-sm" />}
+            >
+              <DynamicSearch params={params} />
+            </Suspense>
+          </div>
           <div className="ml-auto flex w-full justify-end">
             <SignedOut>
               <SignInButton />
@@ -56,6 +66,38 @@ export default function RootLayout({
     </MultiSidebarProvider>
   );
 }
+
+const DynamicSearch = async ({
+  params,
+}: {
+  params: Promise<{ userId: string; databaseId: string }>;
+}) => {
+  const { userId, databaseId } = await params;
+  const { userId: clerkUserId } = await auth();
+
+  const cachedResult = cache(
+    async () => {
+      const result = await getInitialData({ databaseId });
+      return result;
+    },
+    [databaseId],
+    {
+      tags: [databaseId],
+    },
+  );
+
+  const result = await cachedResult();
+
+  if (clerkUserId !== userId) {
+    redirect("/");
+  }
+
+  if (!result.success) {
+    return null;
+  }
+
+  return <SearchBar locations={result.locations} />;
+};
 
 const DatabaseSelectWrapper = async ({
   params,

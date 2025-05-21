@@ -35,7 +35,9 @@ async function getAuthenticatedNotionClient(userId: string) {
 async function fetchAndFormatDatabaseProperties(
   notion: Client,
   databaseId: string,
-): Promise<Record<string, { type: "multi_select" | "select" | "relation" }>> {
+): Promise<
+  Record<string, { type: "multi_select" | "select" | "relation" | "number" }>
+> {
   try {
     const database = await notion.databases.retrieve({
       database_id: databaseId,
@@ -45,13 +47,17 @@ async function fetchAndFormatDatabaseProperties(
         if (
           prop.type === "multi_select" ||
           prop.type === "select" ||
-          prop.type === "relation"
+          prop.type === "relation" ||
+          prop.type === "number"
         ) {
           acc[key] = { type: prop.type };
         }
         return acc;
       },
-      {} as Record<string, { type: "multi_select" | "select" | "relation" }>,
+      {} as Record<
+        string,
+        { type: "multi_select" | "select" | "relation" | "number" }
+      >,
     );
   } catch (error) {
     console.error("Failed to fetch or format database properties:", error);
@@ -157,13 +163,18 @@ export const userRouter = {
                   ? { name: value }
                   : null,
             };
-          } else {
+          } else if (prop.type === "relation") {
             notionProps[key] = {
               type: "relation",
               relation:
                 typeof value === "string" && value.length > 0
                   ? [{ id: value }]
                   : [],
+            };
+          } else {
+            notionProps[key] = {
+              type: "number",
+              number: typeof value === "number" ? value : 0,
             };
           }
         }

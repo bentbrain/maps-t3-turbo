@@ -1,6 +1,14 @@
 import type { Location } from "@/lib/get-initial-data";
-import { DatabaseProperty, useSidebarStore } from "@/lib/sidebar-store";
-import { CircleMinus, Loader2 } from "lucide-react";
+import type { DatabaseProperty } from "@/lib/sidebar-store";
+import { useState } from "react";
+import { useSidebarStore } from "@/lib/sidebar-store";
+import {
+  ChevronLeft,
+  ChevronRight,
+  CircleMinus,
+  Loader2,
+  Plus,
+} from "lucide-react";
 
 import { Button } from "@acme/ui/button";
 import { Input } from "@acme/ui/input";
@@ -39,6 +47,13 @@ export function SidebarFilterSort({
     clearFilters,
   } = useSidebarStore();
 
+  // State for new filter being created
+  const [newFilterProperty, setNewFilterProperty] = useState<string | null>(
+    null,
+  );
+  const [newFilterOperator, setNewFilterOperator] = useState<"gt" | "lt">("gt");
+  const [newFilterValue, setNewFilterValue] = useState<string>("");
+
   if (locations.length === 0) {
     return null;
   }
@@ -51,14 +66,20 @@ export function SidebarFilterSort({
     );
   }
 
-  // Get all available filter options from database properties
-  const allFilterOptions = Object.entries(databaseProperties)
+  // Get all available number properties
+  const numberProperties = Object.entries(databaseProperties)
+    .filter(
+      ([key, prop]) =>
+        !["Latitude", "Longitude"].includes(key) && prop.type === "number",
+    )
+    .map(([key]) => key);
+
+  // Get all available filter options from database properties for non-number types
+  const selectFilterOptions = Object.entries(databaseProperties)
     .filter(
       ([key, prop]) =>
         !["Latitude", "Longitude"].includes(key) &&
-        (prop.type === "select" ||
-          prop.type === "multi_select" ||
-          prop.type === "number"),
+        (prop.type === "select" || prop.type === "multi_select"),
     )
     .map(([key, prop]) => ({
       name: key,
@@ -71,7 +92,7 @@ export function SidebarFilterSort({
             : [],
     }));
 
-  if (allFilterOptions.length === 0) {
+  if (numberProperties.length === 0 && selectFilterOptions.length === 0) {
     return (
       <div className="text-muted-foreground py-4 text-center text-sm">
         No filter options available
@@ -79,71 +100,47 @@ export function SidebarFilterSort({
     );
   }
 
+  // Get current number filters
+  const numberFilters = filters.filter((f) => f.type === "number");
+
+  // Generate a unique ID for each filter
+  const handleAddFilter = () => {
+    if (newFilterProperty && newFilterValue) {
+      const value = parseFloat(newFilterValue);
+      if (!isNaN(value)) {
+        // Add a timestamp to make each filter unique
+        const uniqueProperty = `${newFilterProperty}_${Date.now()}`;
+        updateNumberFilter(uniqueProperty, newFilterOperator, value);
+        // Reset form
+        setNewFilterProperty(null);
+        setNewFilterOperator("gt");
+        setNewFilterValue("");
+      }
+    }
+  };
+
+  // Group filters by property for display
+  const groupedFilters = numberFilters.reduce(
+    (acc, filter) => {
+      // Remove timestamp from property name for display
+      const baseProperty = filter.property.split("_")[0] ?? filter.property;
+      if (baseProperty) {
+        acc[baseProperty] ??= [];
+        if (Array.isArray(acc[baseProperty])) {
+          acc[baseProperty].push(filter);
+        }
+      }
+      return acc;
+    },
+    {} as Record<string, typeof numberFilters>,
+  );
+
   return (
     <>
-      {allFilterOptions.map((filterOption) => {
+      {selectFilterOptions.map((filterOption) => {
         const currentFilter = filters.find(
           (f) => f.property === filterOption.name,
         );
-
-        if (filterOption.type === "number") {
-          return (
-            <SidebarGroup key={filterOption.name}>
-              <SidebarGroupLabel className="flex w-full items-center justify-between gap-2 pr-0">
-                <span className="w-full truncate">{filterOption.name}</span>
-                {currentFilter && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => removeFilter(filterOption.name)}
-                  >
-                    <CircleMinus className="h-4 w-4" />
-                  </Button>
-                )}
-              </SidebarGroupLabel>
-              <SidebarGroupContent className="space-y-2 pl-2">
-                <div className="grid grid-cols-[auto_1fr] gap-2">
-                  <Select
-                    value={currentFilter?.operator ?? "gt"}
-                    onValueChange={(value: "gt" | "lt") => {
-                      if (currentFilter?.value !== undefined) {
-                        updateNumberFilter(
-                          filterOption.name,
-                          value,
-                          currentFilter.value,
-                        );
-                      }
-                    }}
-                  >
-                    <SelectTrigger className="w-[100px]">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="gt">Greater than</SelectItem>
-                      <SelectItem value="lt">Less than</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Input
-                    type="number"
-                    value={currentFilter?.value ?? ""}
-                    onChange={(e) => {
-                      const value = parseFloat(e.target.value);
-                      if (!isNaN(value)) {
-                        updateNumberFilter(
-                          filterOption.name,
-                          currentFilter?.operator ?? "gt",
-                          value,
-                        );
-                      }
-                    }}
-                    placeholder="Enter value..."
-                  />
-                </div>
-              </SidebarGroupContent>
-            </SidebarGroup>
-          );
-        }
-
         const includedValues = currentFilter?.values ?? [];
 
         // Get the property definition
@@ -162,7 +159,6 @@ export function SidebarFilterSort({
 
         return (
           <SidebarGroup key={filterOption.name}>
-            {/* Group Header with Toggle All */}
             <SidebarGroupLabel className="flex w-full items-center justify-between gap-2 pr-0">
               <span className="w-full truncate">{filterOption.name}</span>
               <Switch
@@ -183,7 +179,6 @@ export function SidebarFilterSort({
               />
             </SidebarGroupLabel>
 
-            {/* Filter Options */}
             <SidebarGroupContent className="space-y-2 pl-2">
               <SidebarMenu className="space-y-1">
                 {allOptionValues.map((option) => {
@@ -228,6 +223,103 @@ export function SidebarFilterSort({
           </SidebarGroup>
         );
       })}
+
+      {numberProperties.length > 0 && (
+        <SidebarGroup>
+          <SidebarGroupLabel>Number Filtering</SidebarGroupLabel>
+          <SidebarGroupContent className="space-y-4">
+            {Object.entries(groupedFilters).map(
+              ([property, propertyFilters]) => (
+                <div key={property} className="space-y-2">
+                  {propertyFilters.map((filter) => (
+                    <div
+                      key={filter.property}
+                      className="flex items-center justify-between gap-2 rounded-md border p-2"
+                    >
+                      <div className="flex flex-col gap-1">
+                        <p className="font-medium">{property}</p>
+                        <div className="text-muted-foreground flex-1 text-xs">
+                          {filter.operator === "gt"
+                            ? "Greater than"
+                            : "Less than"}{" "}
+                          {filter.value}
+                        </div>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeFilter(filter.property)}
+                      >
+                        <CircleMinus className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              ),
+            )}
+
+            <div className="space-y-3 rounded-md border p-3">
+              <div className="flex items-center gap-2">
+                <Select
+                  value={newFilterProperty ?? ""}
+                  onValueChange={setNewFilterProperty}
+                >
+                  <SelectTrigger size="sm" className="text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {numberProperties.map((prop) => (
+                      <SelectItem key={prop} value={prop}>
+                        {prop}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <Select
+                  value={newFilterOperator}
+                  onValueChange={(value: "gt" | "lt") =>
+                    setNewFilterOperator(value)
+                  }
+                >
+                  <SelectTrigger
+                    size="sm"
+                    className="px-2 text-xs"
+                    showArrow={false}
+                  >
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="gt">
+                      <ChevronRight className="h-4 w-4" />
+                    </SelectItem>
+                    <SelectItem value="lt">
+                      <ChevronLeft className="h-4 w-4" />
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <Input
+                type="number"
+                value={newFilterValue}
+                onChange={(e) => setNewFilterValue(e.target.value)}
+                placeholder="Enter value..."
+              />
+
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full"
+                disabled={!newFilterProperty || !newFilterValue}
+                onClick={handleAddFilter}
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Add Filter
+              </Button>
+            </div>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      )}
 
       {filters.length > 0 && (
         <Button

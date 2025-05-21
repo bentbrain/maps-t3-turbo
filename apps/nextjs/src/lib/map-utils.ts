@@ -94,8 +94,9 @@ export function filterLocations(
         );
       } else {
         // Number filter
+        const baseProperty = filter.property.split("_")[0]; // Extract base property name without timestamp
         const numberValue = location.filterOptions.find(
-          (opt) => opt.name === filter.property,
+          (opt) => opt.name === baseProperty,
         )?.value;
         if (typeof numberValue !== "number") return false;
 

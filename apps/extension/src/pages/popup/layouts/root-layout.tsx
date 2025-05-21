@@ -51,20 +51,21 @@ export function useDataContext() {
 }
 
 async function fetchUserDatabases() {
-  const cached = (await Browser.storage.local.get("userDatabases")) as {
-    userDatabases?: DatabaseObjectResponse[];
-  };
-  if (cached.userDatabases) {
-    return cached.userDatabases;
-  }
+  // const cached = (await Browser.storage.local.get("userDatabases")) as {
+  //   userDatabases?: DatabaseObjectResponse[];
+  // };
+  // if (cached.userDatabases) {
+  //   console.log("cached.userDatabases: ", cached.userDatabases);
+  //   return cached.userDatabases;
+  // }
 
   // Fetch from API directly using the plain client
   const data = await trpcClient.user.getUserDatabasesFromNotion.query();
 
-  await Browser.storage.local.set({
-    userDatabases: data,
-    lastFetched: Date.now(),
-  });
+  // await Browser.storage.local.set({
+  //   userDatabases: data,
+  //   lastFetched: Date.now(),
+  // });
 
   return data;
 }
@@ -77,8 +78,8 @@ const DataProvider = ({ children }: { children: React.ReactNode }) => {
   } = useQuery({
     queryKey: ["userDatabases"],
     queryFn: fetchUserDatabases,
-    staleTime: 1000 * 60 * 30, // 30 minutes
-    gcTime: 1000 * 60 * 60 * 24, // 24 hours
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    gcTime: 1000 * 60 * 60 * 1, // 1 hours
   });
 
   const { data: selectedDatabaseId } = useQuery({
