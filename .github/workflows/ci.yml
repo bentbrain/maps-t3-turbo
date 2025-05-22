@@ -55,3 +55,28 @@ jobs:
 
       - name: Typecheck
         run: pnpm typecheck
+
+  build-extension:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup
+        uses: ./tooling/github/setup
+
+      - name: Build extension
+        run: pnpm build:chrome
+        env:
+          VITE_PUBLISHABLE_KEY: ${{ secrets.VITE_PUBLISHABLE_KEY }}
+          VITE_CLERK_FRONTEND_API: ${{ secrets.VITE_CLERK_FRONTEND_API }}
+          VITE_CRX_ID: ${{ secrets.VITE_CRX_ID }}
+          VITE_CRX_PUBLIC_KEY: ${{ secrets.VITE_CRX_PUBLIC_KEY }}
+          VITE_PUBLIC_CLERK_SYNC_HOST: ${{ secrets.VITE_PUBLIC_CLERK_SYNC_HOST }}
+          VITE_WEBSITE_URL: ${{ secrets.VITE_WEBSITE_URL }}
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+
+      - name: Upload extension
+        uses: actions/upload-artifact@v4
+        with:
+          name: extension
+          path: apps/extension/dist_chrome
