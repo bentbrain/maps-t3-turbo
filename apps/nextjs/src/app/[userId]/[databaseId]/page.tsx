@@ -4,7 +4,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import GoogleMapView from "@/components/google-map-view";
 import RetryButton from "@/components/retry-button";
-import { getInitialData, getNotionUrl } from "@/lib/get-initial-data";
+import {
+  ErrorMessage,
+  getInitialData,
+  getNotionUrl,
+} from "@/lib/get-initial-data";
 import { prefetch, trpc } from "@/trpc/server";
 import { auth } from "@clerk/nextjs/server";
 import { AlertCircle, Loader2 } from "lucide-react";
@@ -74,6 +78,14 @@ async function DynamicParts({
   const result = await cachedResult();
 
   if (!result.success) {
+    if (result.error === ErrorMessage.NO_VALID_PAGES_FOUND) {
+      return (
+        <div className="flex h-full w-full items-center justify-center">
+          <p>No valid pages found in the database</p>
+        </div>
+      );
+    }
+
     return <ErrorPage databaseId={databaseId} />;
   }
 

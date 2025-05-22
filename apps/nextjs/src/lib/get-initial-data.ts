@@ -37,6 +37,13 @@ export interface MapBounds {
   west: number;
 }
 
+export enum ErrorMessage {
+  NO_VALID_PAGES_FOUND = "No valid pages found in the database",
+  MISSING_REQUIRED_PROPERTIES = "Missing required properties",
+  FAILED_TO_FETCH_DATABASE = "Failed to fetch database",
+  NOTION_TOKEN_NOT_CONFIGURED = "Notion token is not configured",
+}
+
 export const getNotionUrl = (id: string) => {
   return `https://notion.so/${id.replace(/-/g, "")}`;
 };
@@ -78,7 +85,7 @@ type InitialDataResult =
       initialBounds: MapBounds;
       initialCenter: { lat: number; lng: number };
     }
-  | { success: false; error: string };
+  | { success: false; error: ErrorMessage };
 
 export const getInitialData = async ({
   databaseId,
@@ -88,7 +95,10 @@ export const getInitialData = async ({
   try {
     const token = env.NEXT_PUBLIC_NOTION_TOKEN;
     if (!token) {
-      return { success: false, error: "Notion token is not configured" };
+      return {
+        success: false,
+        error: ErrorMessage.NOTION_TOKEN_NOT_CONFIGURED,
+      };
     }
 
     const notion = new Client({
@@ -99,6 +109,21 @@ export const getInitialData = async ({
       database_id: databaseId,
     });
 
+    const defaultResponse = {
+      success: true,
+      locations: [],
+      initialBounds: {
+        north: 0,
+        south: 0,
+        east: 0,
+        west: 0,
+      },
+      initialCenter: {
+        lat: 0,
+        lng: 0,
+      },
+    };
+
     // Check if database has any results and first result is a page
     if (
       response.results.length === 0 ||
@@ -106,8 +131,8 @@ export const getInitialData = async ({
       !("properties" in response.results[0])
     ) {
       return {
-        success: false,
-        error: "No valid pages found in the database",
+        ...defaultResponse,
+        error: ErrorMessage.NO_VALID_PAGES_FOUND,
       };
     }
 
@@ -119,8 +144,8 @@ export const getInitialData = async ({
     );
     if (missingProperties.length > 0) {
       return {
-        success: false,
-        error: `Missing required properties: ${missingProperties.join(", ")}`,
+        ...defaultResponse,
+        error: ErrorMessage.MISSING_REQUIRED_PROPERTIES,
       };
     }
 
@@ -223,8 +248,18 @@ export const getInitialData = async ({
 
     if (locations.length === 0) {
       return {
-        success: false,
-        error: "No valid locations found in the database",
+        success: true,
+        locations: [],
+        initialBounds: {
+          north: 0,
+          south: 0,
+          east: 0,
+          west: 0,
+        },
+        initialCenter: {
+          lat: 0,
+          lng: 0,
+        },
       };
     }
 
@@ -241,12 +276,13 @@ export const getInitialData = async ({
       initialCenter,
     };
   } catch (error) {
+    console.error(error);
     if (error instanceof Error) {
       return {
         success: false,
-        error: `Failed to fetch database: ${error.message}`,
+        error: ErrorMessage.FAILED_TO_FETCH_DATABASE,
       };
     }
-    return { success: false, error: "Failed to fetch database" };
+    return { success: false, error: ErrorMessage.FAILED_TO_FETCH_DATABASE };
   }
 };

@@ -3,7 +3,7 @@ import type {
   DatabaseObjectResponse,
 } from "@notionhq/client/build/src/api-endpoints";
 import type { TRPCRouterRecord } from "@trpc/server";
-import { unstable_cache as cache, revalidateTag } from "next/cache";
+import { revalidateTag } from "next/cache";
 import { clerkClient } from "@clerk/nextjs/server";
 import { Client } from "@notionhq/client";
 import { TRPCError } from "@trpc/server";
@@ -94,18 +94,7 @@ export const userRouter = {
     const { userId } = ctx;
     const notionClient = await getAuthenticatedNotionClient(userId);
 
-    const filteredDatabases = cache(
-      async () => {
-        return await getDatabasesFromNotion(notionClient);
-      },
-      [userId],
-      {
-        tags: [userId],
-        revalidate: 10 * 60, // 10 minutes
-      },
-    );
-
-    const databases = await filteredDatabases();
+    const databases = await getDatabasesFromNotion(notionClient);
 
     return databases;
   }),
