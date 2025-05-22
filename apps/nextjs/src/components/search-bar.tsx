@@ -45,6 +45,7 @@ function SearchBar({
   selectedDatabaseId: string;
   userId: string;
 }) {
+  "use memo";
   const trpc = useTRPC();
   const [open, setOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -225,6 +226,7 @@ const DatabaseCommand = ({
   selectedDatabaseId: string;
   userId: string;
 }) => {
+  "use memo";
   const [open, setOpen] = useState(false);
   const commandItemRef = useRef<HTMLDivElement>(null);
   const selectTriggerRef = useRef<HTMLButtonElement>(null);
@@ -243,12 +245,14 @@ const DatabaseCommand = ({
   };
 
   const handleSelectOpenChange = (nextOpen: boolean) => {
-    setOpen(nextOpen);
     if (!nextOpen) {
       setTimeout(() => {
         selectTriggerRef.current?.blur();
         commandItemRef.current?.focus();
+        setOpen(false);
       }, 100);
+    } else {
+      setOpen(true);
     }
   };
 
