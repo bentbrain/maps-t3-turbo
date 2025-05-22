@@ -1,9 +1,10 @@
+import { resolve } from "path";
 import { ManifestV3Export } from "@crxjs/vite-plugin";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
-import { resolve } from "path";
-import { BuildOptions, defineConfig, loadEnv, ConfigEnv } from "vite";
+import { BuildOptions, ConfigEnv, defineConfig, loadEnv } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
+
 import { crxI18n, stripDevIcons } from "./custom-vite-plugins";
 import devManifest from "./manifest.dev.json";
 import manifest from "./manifest.json";
@@ -16,7 +17,7 @@ export default defineConfig((config: ConfigEnv) => {
   const localize = false;
 
   // Process manifest with environment variables
-  const processManifest = (manifest: any): ManifestV3Export => {
+  const processManifest = (manifest: any, mode: string): ManifestV3Export => {
     const processed = JSON.parse(
       JSON.stringify(manifest, (_, value) => {
         if (typeof value === "string" && value.startsWith("$VITE_")) {
@@ -33,13 +34,19 @@ export default defineConfig((config: ConfigEnv) => {
           return value.replace(`$${envVar}`, envValue);
         }
         return value;
-      })
+      }),
     );
+
+    // Remove the "key" property in production
+    if (mode === "production" && "key" in processed) {
+      delete processed.key;
+    }
+
     return processed;
   };
 
   const baseManifest = {
-    ...processManifest(manifest),
+    ...processManifest(manifest, config.mode),
     version: pkg.version,
     ...(isDev ? devManifest : ({} as ManifestV3Export)),
     ...(localize
@@ -63,7 +70,7 @@ export default defineConfig((config: ConfigEnv) => {
         Object.entries(env).map(([key, value]) => [
           `import.meta.env.${key}`,
           JSON.stringify(value),
-        ])
+        ]),
       ),
       // Expose the processed manifest to other configs
       baseManifest: JSON.stringify(baseManifest),
