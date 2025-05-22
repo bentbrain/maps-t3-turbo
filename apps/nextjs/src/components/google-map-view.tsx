@@ -1,7 +1,6 @@
 "use client";
 
 import type { Location, MapBounds } from "@/lib/get-initial-data";
-import type { DatabaseProperty } from "@/lib/sidebar-store";
 import type { Marker } from "@googlemaps/markerclusterer";
 import { Fragment, useEffect, useRef, useState } from "react";
 import { useMapStore } from "@/lib/map-store";
@@ -37,7 +36,6 @@ interface Props {
   locations: Location[];
   initialBounds: MapBounds;
   initialCenter: { lat: number; lng: number };
-  databaseProperties: Record<string, DatabaseProperty>;
   sharePage?: boolean;
 }
 

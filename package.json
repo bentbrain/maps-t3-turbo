@@ -8,6 +8,7 @@
   "packageManager": "pnpm@10.6.3",
   "scripts": {
     "build": "turbo run build",
+    "build:chrome": "turbo run build --filter=@acme/extension",
     "clean": "git clean -xdf node_modules",
     "clean:workspaces": "turbo run clean",
     "dev": "turbo watch dev --continue",

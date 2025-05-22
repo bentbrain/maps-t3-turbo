@@ -63,7 +63,6 @@ async function DynamicParts({
         locations={result.locations}
         initialBounds={result.initialBounds}
         initialCenter={result.initialCenter}
-        databaseId={databaseId}
         sharePage={true}
       />
     </main>
