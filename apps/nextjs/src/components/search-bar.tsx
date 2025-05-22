@@ -5,11 +5,20 @@ import type { FuseResultMatch } from "fuse.js";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { getNotionUrl } from "@/lib/get-initial-data";
 import { useMapStore } from "@/lib/map-store";
 import { useTRPC } from "@/trpc/react";
+import { Notion } from "@ridemountainpig/svgl-react";
 import { useQuery } from "@tanstack/react-query";
 import Fuse from "fuse.js";
-import { ChevronDown, Repeat } from "lucide-react";
+import {
+  ChevronDown,
+  Circle,
+  CircleDot,
+  CornerDownLeft,
+  Repeat,
+  Search,
+} from "lucide-react";
 
 import type { RouterOutputs } from "@acme/api";
 import { cn, notionColourMap } from "@acme/ui";
@@ -34,6 +43,7 @@ interface FilterOption {
 function SearchBar({
   locations,
   userId,
+  selectedDatabaseId,
 }: {
   locations: Location[];
   selectedDatabaseId: string;
@@ -143,7 +153,9 @@ function SearchBar({
         variant="outline"
         onClick={() => setOpen(true)}
       >
-        <span>Search..</span>
+        <span className="flex items-center gap-2">
+          <Search className="size-3" /> Search..
+        </span>
         <kbd className="bg-muted text-muted-foreground pointer-events-none hidden h-5 items-center gap-1 rounded border px-1.5 font-mono text-[10px] font-medium opacity-100 select-none md:inline-flex">
           <span className="text-xs">⌘</span>K
         </kbd>
@@ -154,6 +166,7 @@ function SearchBar({
           value={searchTerm}
           ref={inputRef}
           onValueChange={setSearchTerm}
+          className="text-base sm:text-sm"
         />
         <CommandList
           ref={commandListRef}
@@ -163,11 +176,37 @@ function SearchBar({
               commandListRef.current?.focus();
             }
           }}
-          className="@container"
+          className="@container [scrollbar-color:var(--muted-foreground)_rgba(0,0,0,0)]"
         >
           <CommandEmpty>No results found.</CommandEmpty>
           <CommandGroup heading="Commands">
-            <DatabaseCommand databases={databases} userId={userId} />
+            <DatabaseCommand
+              databases={databases}
+              userId={userId}
+              selectedDatabaseId={selectedDatabaseId}
+            />
+            <CommandItem
+              onSelect={() => {
+                redirect(getNotionUrl(selectedDatabaseId));
+              }}
+              asChild
+            >
+              <Link
+                className="flex w-full items-center justify-between gap-2"
+                href={getNotionUrl(selectedDatabaseId)}
+              >
+                <div className="flex w-full items-start justify-between gap-3">
+                  <span className="flex items-center gap-2 font-medium">
+                    <Notion className="w-2" /> Open database in Notion
+                  </span>
+                </div>
+                <CornerDownLeft
+                  width={8}
+                  height={8}
+                  className="text-muted-foreground size-3!"
+                />
+              </Link>
+            </CommandItem>
           </CommandGroup>
           <CommandGroup heading="Locations">
             {searchResults.map(({ item: location, matches }) => (
@@ -177,37 +216,45 @@ function SearchBar({
                   focusFromSidebar(location.lat, location.lng, location.id);
                   setOpen(false);
                 }}
-                className="flex flex-col items-start"
               >
-                <div className="flex items-center gap-2">
-                  <span className="text-lg">{location.icon ?? "📍"}</span>
-                  <span className="font-medium">
-                    {renderHighlightedText(location.name, matches)}
-                  </span>
-                </div>
-                <span className="text-muted-foreground text-xs">
-                  {renderHighlightedText(location.address, matches)}
-                </span>
-                <div className="flex flex-wrap gap-1">
-                  {location.filterOptions.length > 0 &&
-                    location.filterOptions.map((option: FilterOption) =>
-                      option.values?.map((value) => (
-                        <Badge
-                          key={`${option.name}-${value.name}`}
-                          className={cn(
-                            "gap-0",
-                            notionColourMap[
-                              value.color as keyof typeof notionColourMap
-                            ].bg,
-                            notionColourMap[
-                              value.color as keyof typeof notionColourMap
-                            ].text,
-                          )}
-                        >
-                          {renderHighlightedText(value.name, matches)}
-                        </Badge>
-                      )),
-                    )}
+                <div className="flex w-full items-start justify-between gap-3">
+                  <div className="flex flex-col items-start gap-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">{location.icon ?? "📍"}</span>
+                      <span className="font-medium">
+                        {renderHighlightedText(location.name, matches)}
+                      </span>
+                    </div>
+                    <span className="text-muted-foreground text-xs">
+                      {renderHighlightedText(location.address, matches)}
+                    </span>
+                    <div className="flex flex-wrap gap-1">
+                      {location.filterOptions.length > 0 &&
+                        location.filterOptions.map((option: FilterOption) =>
+                          option.values?.map((value) => (
+                            <Badge
+                              key={`${option.name}-${value.name}`}
+                              className={cn(
+                                "gap-0",
+                                notionColourMap[
+                                  value.color as keyof typeof notionColourMap
+                                ].bg,
+                                notionColourMap[
+                                  value.color as keyof typeof notionColourMap
+                                ].text,
+                              )}
+                            >
+                              {renderHighlightedText(value.name, matches)}
+                            </Badge>
+                          )),
+                        )}
+                    </div>
+                  </div>
+                  <CornerDownLeft
+                    width={8}
+                    height={8}
+                    className="text-muted-foreground size-3!"
+                  />
                 </div>
               </CommandItem>
             ))}
@@ -223,9 +270,11 @@ export default SearchBar;
 const DatabaseCommand = ({
   databases,
   userId,
+  selectedDatabaseId,
 }: {
   databases: RouterOutputs["user"]["getUserDatabasesFromNotion"] | undefined;
   userId: string;
+  selectedDatabaseId: string;
 }) => {
   "use memo";
   const [open, setOpen] = useState(false);
@@ -236,28 +285,33 @@ const DatabaseCommand = ({
   return (
     <>
       <CommandItem
-        tabIndex={-1}
+        key={"database-collapsible-trigger"}
         onSelect={() => setOpen((prev) => !prev)}
-        className="flex flex-col items-start justify-between gap-4 @sm:flex-row @sm:items-center"
+        className="order-1 flex flex-col items-start justify-between gap-4 @sm:flex-row @sm:items-center"
       >
         <div className="flex w-full items-center justify-between gap-2">
           <span className="flex items-center gap-2 font-medium">
-            <Repeat className="size-2" /> Change database
+            <Repeat className="w-2" /> Change database
           </span>
           <div>
             <ChevronDown
               className={cn(
-                "size-2 transition-transform",
+                "text-muted-foreground size-3! transition-transform",
                 open && "rotate-180",
               )}
             />
           </div>
         </div>
       </CommandItem>
-      <Collapsible open={open} onOpenChange={setOpen}>
+      <Collapsible
+        key={"database-collapsible-content"}
+        open={open}
+        onOpenChange={setOpen}
+      >
         <CollapsibleContent className="pl-2">
           {databases.map((database) => (
             <CommandItem
+              disabled={database.id === selectedDatabaseId}
               onSelect={() => {
                 console.log(database.id);
                 redirect(`/${userId}/${database.id}`);
@@ -265,11 +319,31 @@ const DatabaseCommand = ({
               asChild
               key={database.id}
             >
-              <Link href={`/${userId}/${database.id}`}>
-                {database.title[0]?.plain_text}
-                <span className="text-muted-foreground hidden text-xs">
-                  {database.id}
-                </span>
+              <Link
+                className="justify-baseline gap-3 text-xs"
+                href={`/${userId}/${database.id}`}
+              >
+                <div className="flex w-full items-center gap-2">
+                  {database.id === selectedDatabaseId ? (
+                    <CircleDot className="text-muted-foreground size-2!" />
+                  ) : (
+                    <Circle className="text-muted-foreground size-2!" />
+                  )}
+                  {database.title[0]?.plain_text}
+                  {database.id === selectedDatabaseId && (
+                    <span className="text-muted-foreground text-xs">
+                      (current)
+                    </span>
+                  )}
+                  <span className="text-muted-foreground hidden text-xs">
+                    {database.id}
+                  </span>
+                </div>
+                {database.id !== selectedDatabaseId && (
+                  <span className="text-muted-foreground">
+                    <CornerDownLeft className="size-3!" />
+                  </span>
+                )}
               </Link>
             </CommandItem>
           ))}

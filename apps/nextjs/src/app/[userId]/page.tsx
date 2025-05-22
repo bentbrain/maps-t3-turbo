@@ -56,7 +56,7 @@ const PageLayout = ({ children }: { children: React.ReactNode }) => {
   return (
     <div className="grid h-dvh w-full grid-rows-[auto_1fr]">
       <header className="bg-background p-3">
-        <div className="ml-auto flex w-full justify-end">
+        <div className="ml-auto flex min-h-9 w-full justify-end">
           <SignedOut>
             <SignInButton />
             <SignUpButton />
