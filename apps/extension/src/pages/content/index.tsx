@@ -5,7 +5,6 @@ interface LocationData {
   address: string;
   longitude: string;
   latitude: string;
-  website: string;
   emoji?: string;
   tags?: string[];
   city?: string;
@@ -35,7 +34,7 @@ async function extractLocationData(): Promise<LocationData | null> {
     // Extract address
     // Try the div[role="button"] format first
     let addressElement = panel.querySelector(
-      'div[role="button"][aria-label^="Address"]'
+      'div[role="button"][aria-label^="Address"]',
     );
 
     // If not found, try the button[data-item-id="address"] format
@@ -46,7 +45,7 @@ async function extractLocationData(): Promise<LocationData | null> {
     // If still not found, try looking for any elements containing an address
     if (!addressElement) {
       const elements = Array.from(
-        panel.querySelectorAll('div[role="button"], button')
+        panel.querySelectorAll('div[role="button"], button'),
       ) as (HTMLDivElement | HTMLButtonElement)[];
       addressElement =
         elements.find((element) => {
@@ -56,7 +55,7 @@ async function extractLocationData(): Promise<LocationData | null> {
             (ariaLabel.toLowerCase().includes("address") ||
               // Common patterns in residential addresses
               ariaLabel.match(
-                /\d+\s+[a-zA-Z\s]+(?:street|st|road|rd|avenue|ave|lane|ln|drive|dr)/i
+                /\d+\s+[a-zA-Z\s]+(?:street|st|road|rd|avenue|ave|lane|ln|drive|dr)/i,
               ))
           );
         }) || null;
@@ -78,13 +77,11 @@ async function extractLocationData(): Promise<LocationData | null> {
       const altMatches = url.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
       if (altMatches) {
         const [, latitude, longitude] = altMatches;
-        const website = extractWebsite(panel);
         const data = {
           title,
           address,
           longitude,
           latitude,
-          website,
         };
         return data;
       }
@@ -100,15 +97,11 @@ async function extractLocationData(): Promise<LocationData | null> {
 
     const [, latitude, longitude] = coords;
 
-    // Extract website if available
-    const website = extractWebsite(panel);
-
     const data = {
       title,
       address,
       longitude,
       latitude,
-      website,
     };
 
     return data;
@@ -116,15 +109,6 @@ async function extractLocationData(): Promise<LocationData | null> {
     console.error("Error extracting location data:", error);
     throw error;
   }
-}
-
-function extractWebsite(panel: Element): string {
-  const websiteElement = panel.querySelector('a[aria-label^="Website:"]');
-  if (!websiteElement) {
-    return "";
-  }
-  const website = websiteElement.getAttribute("href") || "";
-  return website;
 }
 
 // Only respond to explicit messages from the popup

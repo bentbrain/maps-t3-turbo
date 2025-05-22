@@ -236,7 +236,6 @@ const MarkerWithInfoWindow = ({
     </Fragment>
   );
 };
-
 export default function GoogleMapView({
   locations,
   initialBounds,

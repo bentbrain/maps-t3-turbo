@@ -1,5 +1,5 @@
 import type { Location } from "@/lib/get-initial-data";
-import { GlobeIcon, MapIcon } from "lucide-react";
+import { MapIcon } from "lucide-react";
 
 import type { notionColourMap } from "@acme/ui";
 import { Badge } from "@acme/ui/badge";
@@ -53,18 +53,7 @@ export const MarkerInfoWindow = ({
           <MapIcon className="inline h-4 w-4" /> Directions
         </a>
       </Button>
-      {location.website && (
-        <Button asChild variant="outline">
-          <a
-            href={location.website}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="block"
-          >
-            <GlobeIcon className="inline h-4 w-4" /> Website
-          </a>
-        </Button>
-      )}
+
       {!sharePage && <SidebarToggleButton />}
     </div>
   </div>

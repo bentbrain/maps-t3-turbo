@@ -22,6 +22,8 @@ export function createDynamicFormSchema(
       dynamicFields[key.toLowerCase()] = z.array(z.string()).default([]);
     } else if (prop.type === "select") {
       dynamicFields[key.toLowerCase()] = z.string().default("");
+    } else if (prop.type === "number") {
+      dynamicFields[key.toLowerCase()] = z.coerce.number().default(0);
     }
   }
 

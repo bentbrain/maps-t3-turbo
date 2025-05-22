@@ -236,21 +236,23 @@ export function SidebarClientList({
 
   return (
     <Tabs className="pl-2" defaultValue="locations">
-      <TabsList className="mr-2 w-full">
-        <TabsTrigger value="locations">Locations</TabsTrigger>
-        <TabsTrigger value="filters">
-          Filters
-          {filters.length > 0 && (
-            <Badge variant="secondary">
-              {filters.reduce(
-                (count: number, filter: { values: string[] }) =>
-                  count + filter.values.length,
-                0,
-              )}
-            </Badge>
-          )}
-        </TabsTrigger>
-      </TabsList>
+      <div>
+        <TabsList className="w-full">
+          <TabsTrigger value="locations">Locations</TabsTrigger>
+          <TabsTrigger value="filters">
+            Filters
+            {filters.length > 0 && (
+              <Badge variant="secondary">
+                {filters.reduce(
+                  (count: number, filter: { values: string[] }) =>
+                    count + filter.values.length,
+                  0,
+                )}
+              </Badge>
+            )}
+          </TabsTrigger>
+        </TabsList>
+      </div>
       <TabsContent className="pr-2" value="locations">
         {/* Group Controls */}
         <Select

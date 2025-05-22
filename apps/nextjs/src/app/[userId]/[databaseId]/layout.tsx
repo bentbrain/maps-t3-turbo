@@ -1,10 +1,11 @@
 import { Suspense } from "react";
+import { unstable_cache as cache } from "next/cache";
 import { redirect } from "next/navigation";
-import DatabaseSelect from "@/components/database-select";
+import SearchBar from "@/components/search-bar";
 import { AppSidebar } from "@/components/sidebar-app";
 import { RightSidebarTrigger } from "@/components/sidebar-dynamic-wrapper";
 import { PageSidebar } from "@/components/sidebar-page";
-import { prefetch, trpc } from "@/trpc/server";
+import { getInitialData } from "@/lib/get-initial-data";
 import {
   SignedIn,
   SignedOut,
@@ -13,7 +14,6 @@ import {
   UserButton,
 } from "@clerk/nextjs";
 import { auth } from "@clerk/nextjs/server";
-import { z } from "zod";
 
 import { MultiSidebarProvider } from "@acme/ui/sidebar";
 import { Skeleton } from "@acme/ui/skeleton";
@@ -35,11 +35,13 @@ export default function RootLayout({
           <div className="flex justify-start">
             <RightSidebarTrigger />
           </div>
-          <Suspense
-            fallback={<Skeleton className="mx-auto h-9 w-full max-w-sm" />}
-          >
-            <DatabaseSelectWrapper params={params} />
-          </Suspense>
+          <div className="mx-auto flex w-52 gap-2">
+            <Suspense
+              fallback={<Skeleton className="mx-auto h-9 w-full max-w-sm" />}
+            >
+              <DynamicSearch params={params} />
+            </Suspense>
+          </div>
           <div className="ml-auto flex w-full justify-end">
             <SignedOut>
               <SignInButton />
@@ -57,7 +59,7 @@ export default function RootLayout({
   );
 }
 
-const DatabaseSelectWrapper = async ({
+const DynamicSearch = async ({
   params,
 }: {
   params: Promise<{ userId: string; databaseId: string }>;
@@ -65,17 +67,32 @@ const DatabaseSelectWrapper = async ({
   const { userId, databaseId } = await params;
   const { userId: clerkUserId } = await auth();
 
+  const cachedResult = cache(
+    async () => {
+      const result = await getInitialData({ databaseId });
+      return result;
+    },
+    [databaseId],
+    {
+      tags: [databaseId],
+    },
+  );
+
+  const result = await cachedResult();
+
   if (clerkUserId !== userId) {
     redirect("/");
   }
 
-  const validDatabaseId = z.string().uuid().safeParse(databaseId);
-
-  if (!validDatabaseId.success) {
-    redirect("/");
+  if (!result.success) {
+    return null;
   }
 
-  prefetch(trpc.user.getUserDatabasesFromNotion.queryOptions());
-
-  return <DatabaseSelect userId={userId} databaseId={databaseId} />;
+  return (
+    <SearchBar
+      userId={userId}
+      selectedDatabaseId={databaseId}
+      locations={result.locations}
+    />
+  );
 };

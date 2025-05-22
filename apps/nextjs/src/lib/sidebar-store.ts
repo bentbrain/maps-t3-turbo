@@ -1,3 +1,5 @@
+"use client";
+
 import type { inferRouterOutputs } from "@trpc/server";
 import { create } from "zustand";
 

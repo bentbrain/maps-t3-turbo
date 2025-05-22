@@ -55,6 +55,7 @@ async function fetchUserDatabases() {
     userDatabases?: DatabaseObjectResponse[];
   };
   if (cached.userDatabases) {
+    console.log("cached.userDatabases: ", cached.userDatabases);
     return cached.userDatabases;
   }
 
@@ -77,8 +78,8 @@ const DataProvider = ({ children }: { children: React.ReactNode }) => {
   } = useQuery({
     queryKey: ["userDatabases"],
     queryFn: fetchUserDatabases,
-    staleTime: 1000 * 60 * 30, // 30 minutes
-    gcTime: 1000 * 60 * 60 * 24, // 24 hours
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    gcTime: 1000 * 60 * 60 * 1, // 1 hours
   });
 
   const { data: selectedDatabaseId } = useQuery({

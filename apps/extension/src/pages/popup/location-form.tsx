@@ -36,7 +36,6 @@ interface LocationData {
   address: string;
   longitude: string;
   latitude: string;
-  website: string;
   emoji?: string;
   [key: string]: string | string[] | undefined;
 }
@@ -105,7 +104,6 @@ export default function LocationForm() {
       address: "",
       longitude: "",
       latitude: "",
-      website: "",
       emoji: "📍",
     },
   });
@@ -130,7 +128,6 @@ export default function LocationForm() {
         address: locationData.address || "",
         longitude: locationData.longitude || "",
         latitude: locationData.latitude || "",
-        website: locationData.website || "",
         emoji: "📍",
       };
 
@@ -141,7 +138,6 @@ export default function LocationForm() {
           key !== "address" &&
           key !== "longitude" &&
           key !== "latitude" &&
-          key !== "website" &&
           key !== "emoji"
         ) {
           formData[key.toLowerCase()] = value;
@@ -365,23 +361,10 @@ export default function LocationForm() {
             />
           </div>
 
-          <FormField
-            control={form.control}
-            name="website"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Website (optional)</FormLabel>
-                <FormControl>
-                  <Input type="url" {...field} disabled={isLocationLoading} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
           {/* Dynamically render select/multi-select fields */}
-          {Object.entries(selectedDatabase?.properties ?? {}).map(
-            ([key, prop]) => {
+          {Object.entries(selectedDatabase?.properties ?? {})
+            .filter(([key, prop]) => key !== "Longitude" && key !== "Latitude")
+            .map(([key, prop]) => {
               if (prop.type === "multi_select") {
                 return (
                   <FormField
@@ -595,9 +578,30 @@ export default function LocationForm() {
                   />
                 );
               }
+              if (prop.type === "number") {
+                return (
+                  <FormField
+                    key={key}
+                    control={form.control}
+                    name={key.toLowerCase()}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{key}</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            {...field}
+                            disabled={isLocationLoading}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                );
+              }
               return null;
-            },
-          )}
+            })}
           <Button
             type="submit"
             className="w-full"
