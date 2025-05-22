@@ -203,12 +203,6 @@ export const userRouter = {
                 ? data.latitude
                 : 0,
         };
-        notionProps.Website = {
-          url:
-            typeof data.website === "string" && data.website.length > 0
-              ? data.website
-              : null,
-        };
 
         return notionProps;
       }

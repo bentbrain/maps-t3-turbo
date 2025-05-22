@@ -51,15 +51,6 @@ export function useDataContext() {
 }
 
 async function fetchUserDatabases() {
-  const cached = (await Browser.storage.local.get("userDatabases")) as {
-    userDatabases?: DatabaseObjectResponse[];
-  };
-  if (cached.userDatabases) {
-    console.log("cached.userDatabases: ", cached.userDatabases);
-    return cached.userDatabases;
-  }
-
-  // Fetch from API directly using the plain client
   const data = await trpcClient.user.getUserDatabasesFromNotion.query();
 
   await Browser.storage.local.set({

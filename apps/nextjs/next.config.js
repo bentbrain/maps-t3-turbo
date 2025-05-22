@@ -9,7 +9,6 @@ const config = {
   /** Enables hot reloading for local packages without a build step */
   transpilePackages: [
     "@acme/api",
-    "@acme/auth",
     "@acme/ui",
     "@acme/validators",
   ],
