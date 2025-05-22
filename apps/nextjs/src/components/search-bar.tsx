@@ -2,7 +2,7 @@
 
 import type { Location } from "@/lib/get-initial-data";
 import type { FuseResultMatch } from "fuse.js";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { useMapStore } from "@/lib/map-store";
@@ -24,6 +24,7 @@ import {
   CommandItem,
   CommandList,
 } from "@acme/ui/command";
+import { useIsMobile } from "@acme/ui/sidebar";
 
 interface FilterOption {
   name: string;
@@ -40,9 +41,12 @@ function SearchBar({
 }) {
   "use memo";
   const trpc = useTRPC();
+  const isMobile = useIsMobile();
   const [open, setOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const { focusFromSidebar } = useMapStore();
+  const inputRef = useRef<HTMLInputElement>(null);
+  const commandListRef = useRef<HTMLDivElement>(null);
   const { data: databases } = useQuery({
     ...trpc.user.getUserDatabasesFromNotion.queryOptions(),
   });
@@ -148,9 +152,19 @@ function SearchBar({
         <CommandInput
           placeholder="Search locations..."
           value={searchTerm}
+          ref={inputRef}
           onValueChange={setSearchTerm}
         />
-        <CommandList className="@container">
+        <CommandList
+          ref={commandListRef}
+          onScroll={() => {
+            if (isMobile) {
+              inputRef.current?.blur();
+              commandListRef.current?.focus();
+            }
+          }}
+          className="@container"
+        >
           <CommandEmpty>No results found.</CommandEmpty>
           <CommandGroup heading="Commands">
             <DatabaseCommand databases={databases} userId={userId} />

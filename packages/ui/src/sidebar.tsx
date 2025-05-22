@@ -823,4 +823,5 @@ export {
   SidebarSeparator,
   SidebarTrigger,
   useMultiSidebar,
+  useIsMobile,
 };

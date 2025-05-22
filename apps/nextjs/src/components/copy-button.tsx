@@ -55,7 +55,7 @@ export function CopyButton({ databaseId }: { databaseId: string }) {
           <ShareContent copied={copied} />
         </Button>
       ) : (
-        <Popover open={isOpen} onOpenChange={setIsOpen}>
+        <Popover modal open={isOpen} onOpenChange={setIsOpen}>
           <PopoverTrigger asChild>
             <Button variant="outline" aria-label="Copy share link options">
               <ShareContent copied={copied} />
