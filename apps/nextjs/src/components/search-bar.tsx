@@ -245,14 +245,12 @@ const DatabaseCommand = ({
   };
 
   const handleSelectOpenChange = (nextOpen: boolean) => {
+    setOpen(nextOpen);
     if (!nextOpen) {
       setTimeout(() => {
         selectTriggerRef.current?.blur();
         commandItemRef.current?.focus();
-        setOpen(false);
       }, 100);
-    } else {
-      setOpen(true);
     }
   };
 
@@ -281,7 +279,7 @@ const DatabaseCommand = ({
         >
           <SelectValue placeholder="Theme" />
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent portal={false}>
           {databases.map((database) => (
             <SelectItem key={database.id} value={database.id}>
               {database.title[0]?.plain_text}
