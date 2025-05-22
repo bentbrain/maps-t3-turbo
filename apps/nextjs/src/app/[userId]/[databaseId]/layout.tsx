@@ -1,13 +1,11 @@
 import { Suspense } from "react";
 import { unstable_cache as cache } from "next/cache";
 import { redirect } from "next/navigation";
-import DatabaseSelect from "@/components/database-select";
 import SearchBar from "@/components/search-bar";
 import { AppSidebar } from "@/components/sidebar-app";
 import { RightSidebarTrigger } from "@/components/sidebar-dynamic-wrapper";
 import { PageSidebar } from "@/components/sidebar-page";
 import { getInitialData } from "@/lib/get-initial-data";
-import { prefetch, trpc } from "@/trpc/server";
 import {
   SignedIn,
   SignedOut,
@@ -16,7 +14,6 @@ import {
   UserButton,
 } from "@clerk/nextjs";
 import { auth } from "@clerk/nextjs/server";
-import { z } from "zod";
 
 import { MultiSidebarProvider } from "@acme/ui/sidebar";
 import { Skeleton } from "@acme/ui/skeleton";
@@ -38,12 +35,7 @@ export default function RootLayout({
           <div className="flex justify-start">
             <RightSidebarTrigger />
           </div>
-          <div className="flex gap-2">
-            <Suspense
-              fallback={<Skeleton className="mx-auto h-9 w-full max-w-sm" />}
-            >
-              <DatabaseSelectWrapper params={params} />
-            </Suspense>
+          <div className="mx-auto flex w-52 gap-2">
             <Suspense
               fallback={<Skeleton className="mx-auto h-9 w-full max-w-sm" />}
             >
@@ -96,28 +88,11 @@ const DynamicSearch = async ({
     return null;
   }
 
-  return <SearchBar locations={result.locations} />;
-};
-
-const DatabaseSelectWrapper = async ({
-  params,
-}: {
-  params: Promise<{ userId: string; databaseId: string }>;
-}) => {
-  const { userId, databaseId } = await params;
-  const { userId: clerkUserId } = await auth();
-
-  if (clerkUserId !== userId) {
-    redirect("/");
-  }
-
-  const validDatabaseId = z.string().uuid().safeParse(databaseId);
-
-  if (!validDatabaseId.success) {
-    redirect("/");
-  }
-
-  prefetch(trpc.user.getUserDatabasesFromNotion.queryOptions());
-
-  return <DatabaseSelect userId={userId} databaseId={databaseId} />;
+  return (
+    <SearchBar
+      userId={userId}
+      selectedDatabaseId={databaseId}
+      locations={result.locations}
+    />
+  );
 };

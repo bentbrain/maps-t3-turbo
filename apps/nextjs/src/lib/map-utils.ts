@@ -1,3 +1,5 @@
+"use client";
+
 import type { Location } from "@/lib/get-initial-data";
 import type { DatabaseProperty } from "@/lib/sidebar-store";
 import type { Marker } from "@googlemaps/markerclusterer";

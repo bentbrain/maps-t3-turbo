@@ -2,10 +2,18 @@
 
 import type { Location } from "@/lib/get-initial-data";
 import type { FuseResultMatch } from "fuse.js";
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { redirect } from "next/navigation";
 import { useMapStore } from "@/lib/map-store";
+import { useTRPC } from "@/trpc/react";
+import { useQuery } from "@tanstack/react-query";
 import Fuse from "fuse.js";
+import { Repeat } from "lucide-react";
 
+import type { RouterOutputs } from "@acme/api";
+import { cn, notionColourMap } from "@acme/ui";
+import { Badge } from "@acme/ui/badge";
+import { Button } from "@acme/ui/button";
 import {
   CommandDialog,
   CommandEmpty,
@@ -13,31 +21,37 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
+  useCommandState,
 } from "@acme/ui/command";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@acme/ui/select";
 
 interface FilterOption {
   name: string;
   values?: { name: string; color: string; id: string }[];
 }
 
-function SearchBar({ locations }: { locations: Location[] }) {
+function SearchBar({
+  locations,
+  selectedDatabaseId,
+  userId,
+}: {
+  locations: Location[];
+  selectedDatabaseId: string;
+  userId: string;
+}) {
+  const trpc = useTRPC();
   const [open, setOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const { focusFromSidebar } = useMapStore();
-
-  const fuse = useMemo(() => {
-    return new Fuse(locations, {
-      keys: [
-        "name",
-        "address",
-        "filterOptions.name",
-        "filterOptions.values.name",
-        "properties.type",
-      ],
-      includeMatches: true,
-      threshold: 0.3,
-    });
-  }, [locations]);
+  const { data: databases } = useQuery({
+    ...trpc.user.getUserDatabasesFromNotion.queryOptions(),
+  });
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -51,7 +65,25 @@ function SearchBar({ locations }: { locations: Location[] }) {
   }, []);
 
   const searchResults = useMemo(() => {
-    if (!searchTerm) return [];
+    const fuse = new Fuse(locations, {
+      keys: [
+        "name",
+        "address",
+        "filterOptions.name",
+        "filterOptions.values.name",
+        "properties.type",
+      ],
+      includeMatches: true,
+      threshold: 0.3,
+    });
+
+    if (!searchTerm) {
+      // Return all locations in the same format as Fuse's results
+      return locations.map((location) => ({
+        item: location,
+        matches: [],
+      }));
+    }
     try {
       const results = fuse.search(searchTerm);
       return results;
@@ -59,7 +91,7 @@ function SearchBar({ locations }: { locations: Location[] }) {
       console.error(error);
       return [];
     }
-  }, [fuse, searchTerm]);
+  }, [searchTerm, locations]);
 
   // Reset search when dialog closes
   useEffect(() => {
@@ -108,56 +140,74 @@ function SearchBar({ locations }: { locations: Location[] }) {
 
   return (
     <>
-      <button
+      <Button
+        className="text-muted-foreground w-full justify-between text-xs"
+        variant="outline"
         onClick={() => setOpen(true)}
-        className="border-input bg-background text-muted-foreground hover:bg-accent hover:text-accent-foreground w-full rounded-lg border px-3 py-2 text-sm shadow-sm"
       >
-        <span className="hidden lg:inline-flex">Search locations...</span>
-        <span className="inline-flex lg:hidden">Search...</span>
-        <kbd className="bg-muted pointer-events-none absolute top-2.5 right-2 hidden h-5 items-center gap-1 rounded border px-1.5 font-mono text-[10px] font-medium opacity-100 select-none sm:flex">
+        <span>Search..</span>
+        <kbd className="bg-muted text-muted-foreground pointer-events-none hidden h-5 items-center gap-1 rounded border px-1.5 font-mono text-[10px] font-medium opacity-100 select-none md:inline-flex">
           <span className="text-xs">⌘</span>K
         </kbd>
-      </button>
+      </Button>
       <CommandDialog open={open} onOpenChange={setOpen}>
         <CommandInput
           placeholder="Search locations..."
           value={searchTerm}
           onValueChange={setSearchTerm}
         />
-        <CommandList>
+        <CommandList className="@container">
           <CommandEmpty>No results found.</CommandEmpty>
-          {searchResults.length > 0 && (
-            <CommandGroup heading="Locations">
-              {searchResults.map(({ item: location, matches }) => (
-                <CommandItem
-                  key={location.id}
-                  onSelect={() => {
-                    focusFromSidebar(location.lat, location.lng, location.id);
-                    setOpen(false);
-                  }}
-                >
-                  <span className="mr-2 text-lg">{location.icon ?? "📍"}</span>
-                  <span className="mr-2 font-medium">
+          <CommandGroup heading="Commands">
+            <DatabaseCommand
+              databases={databases}
+              selectedDatabaseId={selectedDatabaseId}
+              userId={userId}
+            />
+          </CommandGroup>
+          <CommandGroup heading="Locations">
+            {searchResults.map(({ item: location, matches }) => (
+              <CommandItem
+                key={location.id}
+                onSelect={() => {
+                  focusFromSidebar(location.lat, location.lng, location.id);
+                  setOpen(false);
+                }}
+                className="flex flex-col items-start"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-lg">{location.icon ?? "📍"}</span>
+                  <span className="font-medium">
                     {renderHighlightedText(location.name, matches)}
                   </span>
-                  <span className="text-muted-foreground mr-2 text-sm">
-                    {renderHighlightedText(location.address, matches)}
-                  </span>
+                </div>
+                <span className="text-muted-foreground text-xs">
+                  {renderHighlightedText(location.address, matches)}
+                </span>
+                <div className="flex flex-wrap gap-1">
                   {location.filterOptions.length > 0 &&
                     location.filterOptions.map((option: FilterOption) =>
                       option.values?.map((value) => (
-                        <span
+                        <Badge
                           key={`${option.name}-${value.name}`}
-                          className="bg-muted mr-1 inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
+                          className={cn(
+                            "gap-0",
+                            notionColourMap[
+                              value.color as keyof typeof notionColourMap
+                            ].bg,
+                            notionColourMap[
+                              value.color as keyof typeof notionColourMap
+                            ].text,
+                          )}
                         >
                           {renderHighlightedText(value.name, matches)}
-                        </span>
+                        </Badge>
                       )),
                     )}
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          )}
+                </div>
+              </CommandItem>
+            ))}
+          </CommandGroup>
         </CommandList>
       </CommandDialog>
     </>
@@ -165,3 +215,76 @@ function SearchBar({ locations }: { locations: Location[] }) {
 }
 
 export default SearchBar;
+
+const DatabaseCommand = ({
+  databases,
+  selectedDatabaseId,
+  userId,
+}: {
+  databases: RouterOutputs["user"]["getUserDatabasesFromNotion"] | undefined;
+  selectedDatabaseId: string;
+  userId: string;
+}) => {
+  const [open, setOpen] = useState(false);
+  const commandItemRef = useRef<HTMLDivElement>(null);
+  const selectTriggerRef = useRef<HTMLButtonElement>(null);
+
+  const selectedValue = useCommandState((state) => state.value) as
+    | string
+    | undefined;
+
+  if (!databases || databases.length === 1) {
+    return null;
+  }
+
+  const handleChange = (value: string) => {
+    setOpen(false);
+    redirect(`/${userId}/${value}`);
+  };
+
+  const handleSelectOpenChange = (nextOpen: boolean) => {
+    setOpen(nextOpen);
+    if (!nextOpen) {
+      setTimeout(() => {
+        selectTriggerRef.current?.blur();
+        commandItemRef.current?.focus();
+      }, 100);
+    }
+  };
+
+  return (
+    <CommandItem
+      ref={commandItemRef}
+      tabIndex={-1}
+      onSelect={() => setOpen(true)}
+      className="flex flex-col items-start justify-between gap-4 @sm:flex-row @sm:items-center"
+    >
+      <div className="flex items-center gap-2">
+        <span className="flex items-center gap-2 font-medium">
+          <Repeat className="size-2" /> Change database
+        </span>
+      </div>
+      <Select
+        open={open}
+        onOpenChange={handleSelectOpenChange}
+        defaultValue={selectedDatabaseId}
+        onValueChange={handleChange}
+      >
+        <SelectTrigger
+          tabIndex={selectedValue?.includes("Change database") ? 0 : -1}
+          ref={selectTriggerRef}
+          className="w-full @sm:w-[180px]"
+        >
+          <SelectValue placeholder="Theme" />
+        </SelectTrigger>
+        <SelectContent>
+          {databases.map((database) => (
+            <SelectItem key={database.id} value={database.id}>
+              {database.title[0]?.plain_text}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </CommandItem>
+  );
+};

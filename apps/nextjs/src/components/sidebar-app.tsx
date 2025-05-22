@@ -1,7 +1,10 @@
 import { Suspense } from "react";
 import { unstable_cache as cache } from "next/cache";
+import { redirect } from "next/navigation";
 import { getInitialData } from "@/lib/get-initial-data";
-import { caller } from "@/trpc/server";
+import { caller, prefetch, trpc } from "@/trpc/server";
+import { auth } from "@clerk/nextjs/server";
+import { z } from "zod";
 
 import {
   Sidebar,
@@ -11,6 +14,7 @@ import {
 } from "@acme/ui/sidebar";
 import { Skeleton } from "@acme/ui/skeleton";
 
+import DatabaseSelect from "./database-select";
 import { SidebarClientList } from "./sidebar-client-list";
 import { SidebarButtonWrapper } from "./sidebar-dynamic-wrapper";
 import { SidebarUserLocation } from "./sidebar-user-location";
@@ -48,6 +52,11 @@ export async function AppSidebar({
     <Sidebar side="left">
       <SidebarHeader>
         <SidebarUserLocation />
+        <Suspense
+          fallback={<Skeleton className="mx-auto h-9 w-full max-w-sm" />}
+        >
+          <DatabaseSelectWrapper params={params} />
+        </Suspense>
       </SidebarHeader>
       <SidebarContent className="stable-gutter">
         <Suspense fallback={<Skeleton className="h-full w-full" />}>
@@ -72,3 +81,26 @@ export async function AppSidebar({
     </Sidebar>
   );
 }
+
+const DatabaseSelectWrapper = async ({
+  params,
+}: {
+  params: Promise<{ userId: string; databaseId: string }>;
+}) => {
+  const { userId, databaseId } = await params;
+  const { userId: clerkUserId } = await auth();
+
+  if (clerkUserId !== userId) {
+    redirect("/");
+  }
+
+  const validDatabaseId = z.string().uuid().safeParse(databaseId);
+
+  if (!validDatabaseId.success) {
+    redirect("/");
+  }
+
+  prefetch(trpc.user.getUserDatabasesFromNotion.queryOptions());
+
+  return <DatabaseSelect userId={userId} databaseId={databaseId} />;
+};

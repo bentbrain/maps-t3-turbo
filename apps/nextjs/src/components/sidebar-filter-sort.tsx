@@ -304,6 +304,7 @@ export function SidebarFilterSort({
                 value={newFilterValue}
                 onChange={(e) => setNewFilterValue(e.target.value)}
                 placeholder="Enter value..."
+                className="text-base"
               />
 
               <Button
