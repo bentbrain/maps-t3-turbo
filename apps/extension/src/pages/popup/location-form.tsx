@@ -26,6 +26,7 @@ import {
 } from "@acme/ui/form";
 import { Input } from "@acme/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@acme/ui/popover";
+import { Skeleton } from "@acme/ui/skeleton";
 import { createDynamicFormSchema } from "@acme/validators/new-place-schema";
 
 import { getSelectedDatabaseId } from "./helpers";
@@ -187,6 +188,37 @@ export default function LocationForm() {
     }
   }, [locationError, form]);
 
+  if (isLocationLoading || isLoading) {
+    return (
+      <div className="p-4">
+        <div className="space-y-2">
+          <div className="grid grid-cols-[auto_1fr] gap-2">
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-8 rounded-sm" />
+              <Skeleton className="size-9" />
+            </div>
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-12 rounded-sm" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Skeleton className="h-4 w-16 rounded-sm" />
+            <Skeleton className="h-10 w-full" />
+          </div>
+
+          <div className="space-y-2">
+            <Skeleton className="h-4 w-20 rounded-sm" />
+            <Skeleton className="h-10 w-full" />
+          </div>
+
+          <Skeleton className="h-10 w-full" />
+        </div>
+      </div>
+    );
+  }
+
   if (successUrl) {
     return (
       <div className="space-y-4 p-4">
@@ -217,14 +249,6 @@ export default function LocationForm() {
             Add Another Location
           </Button>
         </div>
-      </div>
-    );
-  }
-
-  if (isLocationLoading) {
-    return (
-      <div className="flex items-center justify-center">
-        <LoaderCircle className="text-muted-foreground h-10 w-10 animate-spin" />
       </div>
     );
   }

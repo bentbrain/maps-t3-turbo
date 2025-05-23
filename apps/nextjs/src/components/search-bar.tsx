@@ -7,13 +7,29 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getNotionUrl } from "@/lib/get-initial-data";
 import { useMapStore } from "@/lib/map-store";
+import { useSidebarStore } from "@/lib/sidebar-store";
 import { useTRPC } from "@/trpc/react";
 import { Notion } from "@ridemountainpig/svgl-react";
 import { useQuery } from "@tanstack/react-query";
 import Fuse from "fuse.js";
-import { ChevronDown, CornerDownLeft, Repeat, Search } from "lucide-react";
+import {
+  CheckCircle,
+  ChevronDown,
+  CircleMinus,
+  CornerDownLeft,
+  Filter,
+  FilterX,
+  LocateFixed,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Repeat,
+  Search,
+  Share,
+} from "lucide-react";
+import { toast } from "sonner";
 
 import type { RouterOutputs } from "@acme/api";
+import { env } from "@acme/env/env";
 import { cn, notionColourMap } from "@acme/ui";
 import { Badge } from "@acme/ui/badge";
 import { Button } from "@acme/ui/button";
@@ -26,7 +42,7 @@ import {
   CommandItem,
   CommandList,
 } from "@acme/ui/command";
-import { useIsMobile } from "@acme/ui/sidebar";
+import { useIsMobile, useMultiSidebar } from "@acme/ui/sidebar";
 
 interface FilterOption {
   name: string;
@@ -144,7 +160,7 @@ function SearchBar({
       <Button
         className={cn(
           "text-muted-foreground w-full justify-between pl-2 text-xs opacity-100 transition-opacity",
-          open && "opacity-0",
+          open && "opacity-30",
         )}
         variant="outline"
         onClick={() => setOpen(true)}
@@ -182,6 +198,10 @@ function SearchBar({
               userId={userId}
               selectedDatabaseId={selectedDatabaseId}
             />
+            <SidebarToggleCommand setOpen={setOpen} />
+            <ClearFiltersCommand setOpen={setOpen} />
+            <CurrentLocationCommand setOpen={setOpen} />
+            <ShareCommand selectedDatabaseId={selectedDatabaseId} />
             <CommandItem
               onSelect={() => {
                 redirect(getNotionUrl(selectedDatabaseId));
@@ -263,6 +283,252 @@ function SearchBar({
 }
 
 export default SearchBar;
+
+const SidebarToggleCommand = ({
+  setOpen,
+}: {
+  setOpen: (open: boolean) => void;
+}) => {
+  const { leftSidebar } = useMultiSidebar();
+
+  return (
+    <CommandItem
+      onSelect={() => {
+        leftSidebar.toggleSidebar();
+        setOpen(false);
+      }}
+    >
+      <div className="flex w-full items-center justify-between gap-2">
+        <span className="flex items-center gap-2 font-medium">
+          {leftSidebar.open ? (
+            <PanelLeftClose className="h-4 w-4" />
+          ) : (
+            <PanelLeftOpen className="h-4 w-4" />
+          )}
+          {leftSidebar.open ? "Close sidebar" : "Open sidebar"}
+        </span>
+        <CornerDownLeft
+          width={8}
+          height={8}
+          className="text-muted-foreground size-3!"
+        />
+      </div>
+    </CommandItem>
+  );
+};
+
+const ClearFiltersCommand = ({
+  setOpen,
+}: {
+  setOpen: (open: boolean) => void;
+}) => {
+  const { filters, clearFilters } = useSidebarStore();
+
+  if (filters.length === 0) {
+    return null;
+  }
+
+  return (
+    <CommandItem
+      onSelect={() => {
+        clearFilters();
+        setOpen(false);
+        toast.success("All filters cleared!");
+      }}
+    >
+      <div className="flex w-full items-center justify-between gap-2">
+        <span className="flex items-center gap-2 font-medium">
+          <CircleMinus className="h-4 w-4" /> Clear all filters
+        </span>
+        <CornerDownLeft
+          width={8}
+          height={8}
+          className="text-muted-foreground size-3!"
+        />
+      </div>
+    </CommandItem>
+  );
+};
+
+const CurrentLocationCommand = ({
+  setOpen,
+}: {
+  setOpen: (open: boolean) => void;
+}) => {
+  const { userLocation, focusUserLocation, setUserLocation } = useMapStore();
+
+  return (
+    <CommandItem
+      onSelect={() => {
+        if (userLocation) {
+          focusUserLocation();
+        } else {
+          navigator.geolocation.getCurrentPosition(
+            (pos) => {
+              setUserLocation({
+                lat: pos.coords.latitude,
+                lng: pos.coords.longitude,
+              });
+              focusUserLocation();
+            },
+            (err) => {
+              if (err.code === err.PERMISSION_DENIED) {
+                toast.error(
+                  "Please allow location access to use this feature.",
+                );
+              } else {
+                toast.error("Unable to retrieve your location.");
+              }
+            },
+          );
+        }
+        setOpen(false);
+      }}
+    >
+      <div className="flex w-full items-center justify-between gap-2">
+        <span className="flex items-center gap-2 font-medium">
+          <LocateFixed className="h-4 w-4" /> View current location
+        </span>
+        <CornerDownLeft
+          width={8}
+          height={8}
+          className="text-muted-foreground size-3!"
+        />
+      </div>
+    </CommandItem>
+  );
+};
+
+function getShareUrl(databaseId: string, withFilters: boolean) {
+  const base = `${env.NEXT_PUBLIC_SITE_URL}/share/${databaseId}`;
+  if (!withFilters) return base;
+  // Use current window's search params for filters/grouping
+  if (typeof window === "undefined") return base;
+  const params = window.location.search;
+  return params ? `${base}${params}` : base;
+}
+
+const ShareCommand = ({
+  selectedDatabaseId,
+}: {
+  selectedDatabaseId: string;
+}) => {
+  const { filters } = useSidebarStore();
+  const [open, setOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const hasFilters = filters.length > 0;
+
+  const handleCopy = (type: "all" | "filtered") => {
+    const url = getShareUrl(selectedDatabaseId, type === "filtered");
+    navigator.clipboard
+      .writeText(url)
+      .then(() => {
+        setOpen(false);
+        setCopied(true);
+        toast.success(
+          type === "filtered"
+            ? "Share link with filters copied!"
+            : "Share link copied!",
+        );
+        setTimeout(() => setCopied(false), 1500);
+      })
+      .catch(() => {
+        toast.error("Failed to copy link");
+      });
+  };
+
+  if (!hasFilters) {
+    return (
+      <CommandItem
+        onSelect={() => {
+          handleCopy("all");
+        }}
+      >
+        <div className="flex w-full items-center justify-between gap-2">
+          <span className="flex items-center gap-2 font-medium">
+            {copied ? (
+              <>
+                {" "}
+                <CheckCircle className="h-4 w-4" />{" "}
+                <span className="sr-only">Copy share link</span>
+              </>
+            ) : (
+              <Share className="h-4 w-4" />
+            )}
+            {copied ? "Copied!" : "Copy share link"}
+          </span>
+          <CornerDownLeft
+            width={8}
+            height={8}
+            className="text-muted-foreground size-3!"
+          />
+        </div>
+      </CommandItem>
+    );
+  }
+
+  return (
+    <>
+      <CommandItem
+        key={"share-collapsible-trigger"}
+        onSelect={() => setOpen((prev) => !prev)}
+        className="order-1 flex flex-col items-start justify-between gap-4 @sm:flex-row @sm:items-center"
+      >
+        <div className="flex w-full items-center justify-between gap-2">
+          <span className="flex items-center gap-2 font-medium">
+            {copied ? (
+              <CheckCircle className="h-4 w-4" />
+            ) : (
+              <Share className="h-4 w-4" />
+            )}
+            {copied ? "Copied!" : "Copy share link"}
+          </span>
+          <div>
+            <ChevronDown
+              className={cn(
+                "text-muted-foreground size-3! transition-transform",
+                open && "rotate-180",
+              )}
+            />
+          </div>
+        </div>
+      </CommandItem>
+      <Collapsible
+        key={"share-collapsible-content"}
+        open={open}
+        onOpenChange={setOpen}
+      >
+        <CollapsibleContent className="pl-2">
+          <CommandItem
+            onSelect={() => {
+              handleCopy("filtered");
+            }}
+          >
+            <div className="flex w-full items-center justify-between gap-2">
+              <span className="flex items-center gap-2 text-sm">
+                <Filter className="h-3 w-3" /> With current filters
+              </span>
+              <CornerDownLeft className="size-3!" />
+            </div>
+          </CommandItem>
+          <CommandItem
+            onSelect={() => {
+              handleCopy("all");
+            }}
+          >
+            <div className="flex w-full items-center justify-between gap-2">
+              <span className="flex items-center gap-2 text-sm">
+                <FilterX className="h-3 w-3" /> Without filters
+              </span>
+              <CornerDownLeft className="size-3!" />
+            </div>
+          </CommandItem>
+        </CollapsibleContent>
+      </Collapsible>
+    </>
+  );
+};
 
 const DatabaseCommand = ({
   databases,

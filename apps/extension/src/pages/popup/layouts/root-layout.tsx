@@ -98,10 +98,6 @@ function DatabaseSelect() {
   const [open, setOpen] = React.useState(false);
   const queryClient = useQueryClient();
 
-  if (!userDatabases) {
-    return <div>No databases found</div>;
-  }
-
   const selectedDatabase = userDatabases?.find(
     (db) => db.id === selectedDatabaseId,
   );
@@ -183,7 +179,7 @@ export const RootLayout = () => {
       syncHost={SYNC_HOST}
     >
       <DataProvider>
-        <div className="plasmo-w-[785px] plasmo-h-[600px]">
+        <div>
           <SignedIn>
             <div className="p-2">
               <DatabaseSelect />
