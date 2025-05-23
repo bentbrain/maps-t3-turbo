@@ -1,6 +1,7 @@
 import { TRPCReactProvider } from "@/trpc/react";
 import { HydrateClient } from "@/trpc/server";
 import { ClerkProvider } from "@clerk/nextjs";
+import { PostHogProvider } from "@/components/PostHogProvider";
 
 import "@acme/ui/styles.css";
 
@@ -40,9 +41,11 @@ export default function RootLayout({
         <body
           className={`${geistSans.variable} ${geistMono.variable} bg-muted group/root antialiased`}
         >
-          <TRPCReactProvider>
-            <HydrateClient>{children}</HydrateClient>
-          </TRPCReactProvider>
+          <PostHogProvider>
+            <TRPCReactProvider>
+              <HydrateClient>{children}</HydrateClient>
+            </TRPCReactProvider>
+          </PostHogProvider>
           <Toaster />
         </body>
       </html>
