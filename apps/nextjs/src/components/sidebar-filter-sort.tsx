@@ -2,13 +2,7 @@ import type { Location } from "@/lib/get-initial-data";
 import type { DatabaseProperty } from "@/lib/sidebar-store";
 import { useState } from "react";
 import { useSidebarStore } from "@/lib/sidebar-store";
-import {
-  ChevronLeft,
-  ChevronRight,
-  CircleMinus,
-  Loader2,
-  Plus,
-} from "lucide-react";
+import { CircleMinus, Loader2, Plus } from "lucide-react";
 
 import { Button } from "@acme/ui/button";
 import { Input } from "@acme/ui/input";
@@ -259,15 +253,15 @@ export function SidebarFilterSort({
             )}
 
             <div className="space-y-3 rounded-md border p-3">
-              <div className="flex items-center gap-2">
+              <div className="grid grid-cols-[1fr_auto] items-center gap-2">
                 <Select
                   value={newFilterProperty ?? ""}
                   onValueChange={setNewFilterProperty}
                 >
-                  <SelectTrigger size="sm" className="text-xs">
+                  <SelectTrigger size="sm" className="w-full text-xs">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent portal={false}>
                     {numberProperties.map((prop) => (
                       <SelectItem key={prop} value={prop}>
                         {prop}
@@ -284,18 +278,14 @@ export function SidebarFilterSort({
                 >
                   <SelectTrigger
                     size="sm"
-                    className="px-2 text-xs"
+                    className="px-3 font-mono text-xs"
                     showArrow={false}
                   >
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="gt">
-                      <ChevronRight className="h-4 w-4" />
-                    </SelectItem>
-                    <SelectItem value="lt">
-                      <ChevronLeft className="h-4 w-4" />
-                    </SelectItem>
+                  <SelectContent portal={false}>
+                    <SelectItem value="gt">&gt;</SelectItem>
+                    <SelectItem value="lt">&lt;</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

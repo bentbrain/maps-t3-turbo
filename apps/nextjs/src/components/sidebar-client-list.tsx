@@ -246,7 +246,7 @@ export function SidebarClientList({
 
   return (
     <Tabs className="pl-2" defaultValue="locations">
-      <div>
+      <div className="pr-2">
         <TabsList className="w-full">
           <TabsTrigger value="locations">Locations</TabsTrigger>
           <TabsTrigger value="filters">
