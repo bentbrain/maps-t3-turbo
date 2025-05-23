@@ -142,7 +142,10 @@ function SearchBar({
   return (
     <>
       <Button
-        className="text-muted-foreground w-full justify-between text-xs"
+        className={cn(
+          "text-muted-foreground w-full justify-between pl-2 text-xs opacity-100 transition-opacity",
+          open && "opacity-0",
+        )}
         variant="outline"
         onClick={() => setOpen(true)}
       >
@@ -162,6 +165,7 @@ function SearchBar({
           className="text-base sm:text-sm"
         />
         <CommandList
+          id="search-bar-command-list"
           ref={commandListRef}
           onScroll={() => {
             if (isMobile) {
