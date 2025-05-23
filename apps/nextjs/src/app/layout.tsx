@@ -1,7 +1,7 @@
+import { PostHogProvider } from "@/components/PostHogProvider";
 import { TRPCReactProvider } from "@/trpc/react";
 import { HydrateClient } from "@/trpc/server";
 import { ClerkProvider } from "@clerk/nextjs";
-import { PostHogProvider } from "@/components/PostHogProvider";
 
 import "@acme/ui/styles.css";
 
@@ -26,8 +26,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Notion Maps 📍",
-  description: "Display locations from Notion",
+  title: "Notion Locations",
+  description: "Location mapping made easy in Notion.",
 };
 
 export default function RootLayout({
