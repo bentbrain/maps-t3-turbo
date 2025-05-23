@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { unstable_cache as cache } from "next/cache";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import GoogleMapView from "@/components/google-map-view";
 import RetryButton from "@/components/retry-button";
 import {
@@ -26,7 +26,7 @@ import {
 export default function Page({
   params,
 }: {
-  params: Promise<{ databaseId: string }>;
+  params: Promise<{ databaseId: string; userId: string }>;
 }) {
   return (
     <div className="h-full w-full">
@@ -46,16 +46,18 @@ export default function Page({
 async function DynamicParts({
   params,
 }: {
-  params: Promise<{ databaseId: string }>;
+  params: Promise<{ databaseId: string; userId: string }>;
 }) {
-  const { databaseId } = await params;
-  const { userId } = await auth();
+  const { databaseId, userId } = await params;
+
+  const { userId: clerkUserId } = await auth();
+
   if (!z.string().uuid().safeParse(databaseId).success) {
     return notFound();
   }
 
-  if (!userId) {
-    return notFound();
+  if (!userId || clerkUserId !== userId) {
+    redirect("/");
   }
 
   prefetch(

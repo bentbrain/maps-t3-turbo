@@ -11,14 +11,7 @@ import { useTRPC } from "@/trpc/react";
 import { Notion } from "@ridemountainpig/svgl-react";
 import { useQuery } from "@tanstack/react-query";
 import Fuse from "fuse.js";
-import {
-  ChevronDown,
-  Circle,
-  CircleDot,
-  CornerDownLeft,
-  Repeat,
-  Search,
-} from "lucide-react";
+import { ChevronDown, CornerDownLeft, Repeat, Search } from "lucide-react";
 
 import type { RouterOutputs } from "@acme/api";
 import { cn, notionColourMap } from "@acme/ui";
@@ -324,10 +317,8 @@ const DatabaseCommand = ({
                 href={`/${userId}/${database.id}`}
               >
                 <div className="flex w-full items-center gap-2">
-                  {database.id === selectedDatabaseId ? (
-                    <CircleDot className="text-muted-foreground size-2!" />
-                  ) : (
-                    <Circle className="text-muted-foreground size-2!" />
+                  {database.icon?.type === "emoji" && (
+                    <span className="text-sm">{database.icon.emoji}</span>
                   )}
                   {database.title[0]?.plain_text}
                   {database.id === selectedDatabaseId && (
