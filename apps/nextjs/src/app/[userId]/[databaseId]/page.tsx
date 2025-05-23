@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import { unstable_cache as cache } from "next/cache";
 import Link from "next/link";
@@ -9,7 +10,7 @@ import {
   getInitialData,
   getNotionUrl,
 } from "@/lib/get-initial-data";
-import { prefetch, trpc } from "@/trpc/server";
+import { caller, prefetch, trpc } from "@/trpc/server";
 import { auth } from "@clerk/nextjs/server";
 import { AlertCircle, Loader2 } from "lucide-react";
 import { z } from "zod";
@@ -22,6 +23,23 @@ import {
   CardHeader,
   CardTitle,
 } from "@acme/ui/card";
+
+interface Props {
+  params: Promise<{ databaseId: string; userId: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { databaseId } = await params;
+
+  const databases = await caller.user.getUserDatabasesFromNotion();
+
+  const database = databases.find((db) => db.id === databaseId);
+
+  return {
+    title: `Map: ${database?.title[0]?.plain_text}`,
+  };
+}
 
 export default function Page({
   params,
