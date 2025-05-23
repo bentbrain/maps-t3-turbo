@@ -4,7 +4,7 @@ import { useMapStore } from "@/lib/map-store";
 import { LocateFixed } from "lucide-react";
 import { toast } from "sonner";
 
-import { Button } from "@acme/ui/button";
+import { SidebarMenuButton, SidebarMenuItem } from "@acme/ui/sidebar";
 
 export function SidebarUserLocation() {
   const { userLocation, focusUserLocation, setUserLocation } = useMapStore();
@@ -34,9 +34,22 @@ export function SidebarUserLocation() {
   };
 
   return (
-    <Button variant="outline" className="w-full" onClick={handleClick}>
-      Current location
-      <LocateFixed aria-hidden="true" className="h-4 w-4" />
-    </Button>
+    <SidebarMenuItem key="user-location">
+      <SidebarMenuButton
+        className="cursor-pointer items-start"
+        isActive={false}
+        onClick={handleClick}
+      >
+        <div className="grid w-full grid-cols-[1fr_auto] gap-2">
+          <h3 className="overflow-hidden font-medium text-nowrap text-ellipsis">
+            Current location
+          </h3>
+          <LocateFixed
+            aria-hidden="true"
+            className="text-muted-foreground h-4 w-4"
+          />
+        </div>
+      </SidebarMenuButton>
+    </SidebarMenuItem>
   );
 }

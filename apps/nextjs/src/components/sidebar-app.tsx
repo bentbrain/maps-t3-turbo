@@ -17,7 +17,6 @@ import { Skeleton } from "@acme/ui/skeleton";
 import DatabaseSelect from "./database-select";
 import { SidebarClientList } from "./sidebar-client-list";
 import { SidebarButtonWrapper } from "./sidebar-dynamic-wrapper";
-import { SidebarUserLocation } from "./sidebar-user-location";
 
 export async function AppSidebar({
   params,
@@ -51,7 +50,6 @@ export async function AppSidebar({
   return (
     <Sidebar side="left">
       <SidebarHeader>
-        <SidebarUserLocation />
         <Suspense
           fallback={<Skeleton className="mx-auto h-9 w-full max-w-sm" />}
         >

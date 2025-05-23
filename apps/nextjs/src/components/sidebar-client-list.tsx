@@ -26,6 +26,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@acme/ui/tabs";
 
 import { SidebarFilterSort } from "./sidebar-filter-sort";
+import { SidebarUserLocation } from "./sidebar-user-location";
 
 function LocationList({
   locations,
@@ -60,6 +61,7 @@ function LocationList({
       <SidebarGroup>
         <SidebarGroupContent>
           <SidebarMenu>
+            <SidebarUserLocation />
             {sortedLocations.map((location) => (
               <SidebarMenuItem key={location.id}>
                 <SidebarMenuButton
@@ -141,6 +143,13 @@ function LocationList({
 
   return (
     <>
+      <SidebarGroup key="user-location">
+        <SidebarGroupContent>
+          <SidebarMenu>
+            <SidebarUserLocation />
+          </SidebarMenu>
+        </SidebarGroupContent>
+      </SidebarGroup>
       {sortedGroups.map(([groupName, groupLocations]) => (
         <SidebarGroup key={groupName}>
           <SidebarGroupLabel>
@@ -208,6 +217,7 @@ export function SidebarClientList({
       <SidebarGroup>
         <SidebarGroupContent>
           <SidebarMenu>
+            <SidebarUserLocation />
             {locations.map((location: Location) => (
               <SidebarMenuItem key={location.id}>
                 <SidebarMenuButton
