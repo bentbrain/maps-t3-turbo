@@ -211,14 +211,14 @@ function SearchBar({
                 }}
               >
                 <div className="flex w-full items-start justify-between gap-3">
-                  <div className="flex flex-col items-start gap-2">
-                    <div className="flex items-center gap-2">
+                  <div className="flex flex-col items-start gap-2 overflow-hidden">
+                    <div className="flex w-full items-center gap-2">
                       <span className="text-lg">{location.icon ?? "📍"}</span>
-                      <span className="font-medium">
+                      <span className="w-full truncate font-medium">
                         {renderHighlightedText(location.name, matches)}
                       </span>
                     </div>
-                    <span className="text-muted-foreground text-xs">
+                    <span className="text-muted-foreground w-full truncate text-xs">
                       {renderHighlightedText(location.address, matches)}
                     </span>
                     <div className="flex flex-wrap gap-1">
