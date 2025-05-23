@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { SignIn } from "@clerk/nextjs";
+import { SignUp } from "@clerk/nextjs";
 import { currentUser } from "@clerk/nextjs/server";
 
 export default async function Home() {
@@ -10,7 +10,7 @@ export default async function Home() {
   return (
     <main className="grid h-dvh w-full place-items-center">
       <div className="flex h-full w-full items-center justify-center p-4">
-        <SignIn />
+        <SignUp />
       </div>
     </main>
   );
