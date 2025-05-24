@@ -1,8 +1,11 @@
 "use client";
 
+import type { NotionNumberFormat } from "@/lib/format-number";
 import type { PageObjectResponse } from "@notionhq/client/build/src/api-endpoints";
 import React from "react";
 import Link from "next/link";
+import { useParams } from "next/navigation";
+import { formatNotionNumber } from "@/lib/format-number";
 import { getNotionUrl } from "@/lib/get-initial-data";
 import { useMapStore } from "@/lib/map-store";
 import { useTRPC } from "@/trpc/react";
@@ -35,6 +38,7 @@ interface PropertyWithName {
   id: string;
   name: string;
   value: NotionPropertyValueWithRelation;
+  numberFormat?: NotionNumberFormat;
 }
 
 const PropertyValue = ({ property }: { property: PropertyWithName }) => {
@@ -48,7 +52,9 @@ const PropertyValue = ({ property }: { property: PropertyWithName }) => {
         </span>
       );
     case "number":
-      return <span>{value.number ?? 0}</span>;
+      return (
+        <span>{formatNotionNumber(value.number, property.numberFormat)}</span>
+      );
     case "select":
       return value.select ? (
         <span
@@ -171,6 +177,8 @@ export function PageSidebar() {
   const { selectedMarkerId } = useMapStore();
   const { rightSidebar } = useMultiSidebar();
   const trpc = useTRPC();
+  const { databaseId, userId } = useParams();
+
   const {
     data: page,
     isLoading,
@@ -178,6 +186,14 @@ export function PageSidebar() {
   } = useQuery(
     trpc.page.getPage.queryOptions({ markerId: selectedMarkerId ?? "" }),
   );
+
+  const { data: databaseProperties, isLoading: isDatabaseLoading } = useQuery({
+    ...trpc.user.getDatabaseProperties.queryOptions({
+      databaseId: databaseId as string,
+      userId: userId as string,
+    }),
+    enabled: !!databaseId && !!userId,
+  });
 
   React.useEffect(() => {
     if (!selectedMarkerId && rightSidebar.open) {
@@ -189,7 +205,7 @@ export function PageSidebar() {
     return null;
   }
 
-  if (isLoading) {
+  if (isLoading || isDatabaseLoading) {
     return <PageSidebarSkeleton />;
   }
 
@@ -227,16 +243,30 @@ export function PageSidebar() {
             <TableBody>
               {Object.entries(page.properties)
                 .filter(([key]) => !["Longitude", "Latitude"].includes(key))
-                .map(([key, prop]) => (
-                  <TableRow className="max-w-full" key={prop.id}>
-                    <TableCell>{prop.TitleToUse}</TableCell>
-                    <TableCell className="overflow-hidden">
-                      <PropertyValue
-                        property={{ id: prop.id, name: key, value: prop }}
-                      />
-                    </TableCell>
-                  </TableRow>
-                ))}
+                .map(([key, prop]) => {
+                  // Get the number format for this property if it exists
+                  const dbProperty = databaseProperties?.[key];
+                  const numberFormat =
+                    dbProperty?.type === "number"
+                      ? (dbProperty.number.format as NotionNumberFormat)
+                      : undefined;
+
+                  return (
+                    <TableRow className="max-w-full" key={prop.id}>
+                      <TableCell>{prop.TitleToUse}</TableCell>
+                      <TableCell className="overflow-hidden">
+                        <PropertyValue
+                          property={{
+                            id: prop.id,
+                            name: key,
+                            value: prop,
+                            numberFormat,
+                          }}
+                        />
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
             </TableBody>
           </Table>
         </div>

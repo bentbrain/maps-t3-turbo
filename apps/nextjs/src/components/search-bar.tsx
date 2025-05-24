@@ -297,6 +297,7 @@ const SidebarToggleCommand = ({
         leftSidebar.toggleSidebar();
         setOpen(false);
       }}
+      className="hidden @md:block"
     >
       <div className="flex w-full items-center justify-between gap-2">
         <span className="flex items-center gap-2 font-medium">
