@@ -261,7 +261,7 @@ export function SidebarFilterSort({
                   <SelectTrigger size="sm" className="w-full text-xs">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent portal={false}>
+                  <SelectContent>
                     {numberProperties.map((prop) => (
                       <SelectItem key={prop} value={prop}>
                         {prop}
@@ -283,7 +283,7 @@ export function SidebarFilterSort({
                   >
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent portal={false}>
+                  <SelectContent>
                     <SelectItem value="gt">&gt;</SelectItem>
                     <SelectItem value="lt">&lt;</SelectItem>
                   </SelectContent>
