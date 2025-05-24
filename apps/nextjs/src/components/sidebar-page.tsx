@@ -135,7 +135,7 @@ const PropertyValue = ({ property }: { property: PropertyWithName }) => {
 
 function PageSidebarSkeleton() {
   return (
-    <Sidebar className="stable-gutter @container" side="right">
+    <>
       <SidebarHeader className="grid grid-cols-[1fr_auto] items-center gap-2 p-0 pr-4">
         <div className="flex flex-row items-center gap-2 p-4">
           <Skeleton className="h-8 w-8" />
@@ -169,13 +169,15 @@ function PageSidebarSkeleton() {
           <Skeleton className="h-16 w-3/4" />
         </div>
       </SidebarContent>
-    </Sidebar>
+    </>
   );
 }
 
 export function PageSidebar() {
   const { selectedMarkerId } = useMapStore();
   const { rightSidebar } = useMultiSidebar();
+  const { open: rightSidebarOpen, toggleSidebar: toggleRightSidebar } =
+    rightSidebar;
   const trpc = useTRPC();
   const { databaseId, userId } = useParams();
 
@@ -196,101 +198,101 @@ export function PageSidebar() {
   });
 
   React.useEffect(() => {
-    if (!selectedMarkerId && rightSidebar.open) {
-      rightSidebar.toggleSidebar();
+    if (!selectedMarkerId && rightSidebarOpen) {
+      toggleRightSidebar();
     }
-  }, [selectedMarkerId, rightSidebar]);
+  }, [selectedMarkerId, rightSidebarOpen, toggleRightSidebar]);
 
   if (!selectedMarkerId) {
     return null;
   }
 
-  if (isLoading || isDatabaseLoading) {
-    return <PageSidebarSkeleton />;
-  }
-
-  if (error) {
-    return (
-      <Sidebar side="right">
+  return (
+    <Sidebar className="stable-gutter @container" side="right">
+      {isLoading || isDatabaseLoading ? (
+        <PageSidebarSkeleton />
+      ) : error ? (
         <SidebarContent className="stable-gutter">
           <div>Error: {error.message}</div>
         </SidebarContent>
-      </Sidebar>
-    );
-  }
+      ) : !page ? (
+        <PageSidebarSkeleton />
+      ) : (
+        <>
+          <SidebarHeader className="grid grid-cols-[1fr_auto] items-center gap-2 p-0 pr-4">
+            <div className="flex flex-row items-center gap-2 p-4">
+              <div>
+                {page.icon && <div className="text-2xl">{page.icon}</div>}
+              </div>
+              <h2 className="text-lg font-extrabold @sm:text-2xl">
+                {page.title}
+              </h2>
+            </div>
+            <Button
+              onClick={() => toggleRightSidebar()}
+              variant="ghost"
+              size="icon"
+              className="aspect-square w-full"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </SidebarHeader>
+          <SidebarContent className="p-4">
+            <div>
+              <Table className="max-w-full">
+                <TableBody>
+                  {Object.entries(page.properties)
+                    .filter(([key]) => !["Longitude", "Latitude"].includes(key))
+                    .map(([key, prop]) => {
+                      // Get the number format for this property if it exists
+                      const dbProperty = databaseProperties?.[key];
+                      const numberFormat =
+                        dbProperty?.type === "number"
+                          ? (dbProperty.number.format as NotionNumberFormat)
+                          : undefined;
 
-  if (!page) return <PageSidebarSkeleton />;
-
-  return (
-    <Sidebar className="stable-gutter @container" side="right">
-      <SidebarHeader className="grid grid-cols-[1fr_auto] items-center gap-2 p-0 pr-4">
-        <div className="flex flex-row items-center gap-2 p-4">
-          <div>{page.icon && <div className="text-2xl">{page.icon}</div>}</div>
-          <h2 className="text-lg font-extrabold @sm:text-2xl">{page.title}</h2>
-        </div>
-        <Button
-          onClick={() => rightSidebar.toggleSidebar()}
-          variant="ghost"
-          size="icon"
-          className="aspect-square w-full"
-        >
-          <X className="h-4 w-4" />
-        </Button>
-      </SidebarHeader>
-      <SidebarContent className="p-4">
-        <div>
-          <Table className="max-w-full">
-            <TableBody>
-              {Object.entries(page.properties)
-                .filter(([key]) => !["Longitude", "Latitude"].includes(key))
-                .map(([key, prop]) => {
-                  // Get the number format for this property if it exists
-                  const dbProperty = databaseProperties?.[key];
-                  const numberFormat =
-                    dbProperty?.type === "number"
-                      ? (dbProperty.number.format as NotionNumberFormat)
-                      : undefined;
-
-                  return (
-                    <TableRow className="max-w-full" key={prop.id}>
-                      <TableCell>{prop.TitleToUse}</TableCell>
-                      <TableCell className="overflow-hidden">
-                        <PropertyValue
-                          property={{
-                            id: prop.id,
-                            name: key,
-                            value: prop,
-                            numberFormat,
-                          }}
-                        />
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-            </TableBody>
-          </Table>
-        </div>
-        <div className="prose prose-sm @lg:prose-base">
-          <Separator className="mb-3" />
-          <NotionRenderer
-            className="[&_.notion-hash-link_svg]:hidden [&_.notion-page-icon]:hidden [&_.notion-title]:hidden [&_header]:hidden"
-            recordMap={page.recordMap}
-            fullPage={true}
-            darkMode={false}
-          />
-        </div>
-      </SidebarContent>
-      <SidebarFooter>
-        <Button variant={"outline"} asChild className="w-full">
-          <Link
-            target="_blank"
-            rel="noopener noreferrer"
-            href={getNotionUrl(page.id)}
-          >
-            <Notion className="inline h-4 w-4" /> Edit in Notion
-          </Link>
-        </Button>
-      </SidebarFooter>
+                      return (
+                        <TableRow className="max-w-full" key={prop.id}>
+                          <TableCell>{prop.TitleToUse}</TableCell>
+                          <TableCell className="overflow-hidden">
+                            <PropertyValue
+                              property={{
+                                id: prop.id,
+                                name: key,
+                                value: prop,
+                                numberFormat,
+                              }}
+                            />
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                </TableBody>
+              </Table>
+            </div>
+            <div className="prose prose-sm @lg:prose-base">
+              <Separator className="mb-3" />
+              <NotionRenderer
+                className="[&_.notion-hash-link_svg]:hidden [&_.notion-page-icon]:hidden [&_.notion-title]:hidden [&_header]:hidden"
+                recordMap={page.recordMap}
+                fullPage={true}
+                darkMode={false}
+              />
+            </div>
+          </SidebarContent>
+          <SidebarFooter>
+            <Button variant={"outline"} asChild className="w-full">
+              <Link
+                target="_blank"
+                rel="noopener noreferrer"
+                href={getNotionUrl(page.id)}
+              >
+                <Notion className="inline h-4 w-4" /> Edit in Notion
+              </Link>
+            </Button>
+          </SidebarFooter>
+        </>
+      )}
     </Sidebar>
   );
 }
