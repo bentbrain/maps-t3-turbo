@@ -220,11 +220,13 @@ export function PageSidebar() {
       ) : (
         <>
           <SidebarHeader className="grid grid-cols-[1fr_auto] items-center gap-2 p-0 pr-4">
-            <div className="flex flex-row items-center gap-2 p-4">
+            <div className="flex flex-col items-start gap-2 p-4 @md:flex-row @md:items-center">
               <div>
-                {page.icon && <div className="text-2xl">{page.icon}</div>}
+                {page.icon && (
+                  <div className="text-lg @md:text-2xl">{page.icon}</div>
+                )}
               </div>
-              <h2 className="text-lg font-extrabold @sm:text-2xl">
+              <h2 className="text-base font-extrabold text-balance @sm:text-2xl">
                 {page.title}
               </h2>
             </div>
