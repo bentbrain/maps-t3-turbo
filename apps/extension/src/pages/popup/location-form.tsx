@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useTRPC } from "@/utils/react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -15,7 +15,11 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@acme/ui/collapsible";
-import { EmojiPicker } from "@acme/ui/emoji-picker";
+import {
+  EmojiPicker,
+  EmojiPickerContent,
+  EmojiPickerSearch,
+} from "@acme/ui/emoji-picker";
 import {
   Form,
   FormControl,
@@ -76,6 +80,8 @@ export default function LocationForm() {
   const [emojiOpen, setEmojiOpen] = useState(false);
   const [successUrl, setSuccessUrl] = useState<string | null>(null);
   const trpc = useTRPC();
+
+  const searchRef = useRef<HTMLInputElement>(null);
 
   const createUserMutation = useMutation(
     trpc.user.addPlaceToNotion.mutationOptions(),
@@ -148,6 +154,13 @@ export default function LocationForm() {
       form.reset(formData);
     }
   }, [locationData, form]);
+
+  // Focus search input when emoji picker opens
+  useEffect(() => {
+    if (emojiOpen && searchRef.current) {
+      searchRef.current.focus();
+    }
+  }, [emojiOpen]);
 
   if (!selectedDatabaseId) {
     return (
@@ -295,28 +308,31 @@ export default function LocationForm() {
                           )}
                         </Button>
                       </CollapsibleTrigger>
-                      <CollapsibleContent className="absolute top-4 right-0 bottom-4 left-4">
+                      <CollapsibleContent className="absolute inset-4 grid place-items-center">
                         <EmojiPicker
-                          className="h-full w-full shadow [&_[tabindex='0']]:!h-full"
-                          emojisPerRow={8}
-                          onEmojiSelect={(emoji: string) => {
+                          className="h-full max-w-full rounded-lg border shadow-md"
+                          onEmojiSelect={({ emoji }) => {
                             field.onChange(emoji);
                             setEmojiOpen(false);
                           }}
                         >
-                          <EmojiPicker.Header>
-                            <EmojiPicker.Input placeholder="Search emoji" />
-                            <Button
-                              onClick={() => setEmojiOpen(false)}
-                              variant="outline"
-                              size="icon"
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          </EmojiPicker.Header>
-                          <EmojiPicker.Group className="h-full">
-                            <EmojiPicker.List />
-                          </EmojiPicker.Group>
+                          <div className="flex items-center gap-2 border-b">
+                            <EmojiPickerSearch
+                              ref={searchRef}
+                              className="w-full border-none"
+                            />
+                            <div className="p-1">
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                className="size-8"
+                                onClick={() => setEmojiOpen(false)}
+                              >
+                                <X className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          </div>
+                          <EmojiPickerContent />
                         </EmojiPicker>
                       </CollapsibleContent>
                     </Collapsible>
