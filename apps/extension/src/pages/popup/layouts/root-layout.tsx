@@ -11,6 +11,7 @@ import { Button } from "@acme/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@acme/ui/popover";
 import { Skeleton } from "@acme/ui/skeleton";
 
+import { UpdateNotification } from "../../../components/UpdateNotification";
 import { getSelectedDatabaseId } from "../helpers";
 
 const PUBLISHABLE_KEY = import.meta.env.VITE_PUBLISHABLE_KEY;
@@ -180,6 +181,9 @@ export const RootLayout = () => {
     >
       <DataProvider>
         <div>
+          <div className="p-2">
+            <UpdateNotification />
+          </div>
           <SignedIn>
             <div className="p-2">
               <DatabaseSelect />

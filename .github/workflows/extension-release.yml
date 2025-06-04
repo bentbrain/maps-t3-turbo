@@ -1,0 +1,97 @@
+name: Extension Release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  FORCE_COLOR: 3
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
+      version: ${{ steps.release.outputs.version }}
+    steps:
+      - name: Run release-please
+        uses: google-github-actions/release-please-action@v4
+        id: release
+        with:
+          config-file: .github/release-please-config.json
+          manifest-file: .github/.release-please-manifest.json
+
+  build-extension:
+    needs: release-please
+    if: needs.release-please.outputs.release_created
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup
+        uses: ./tooling/github/setup
+
+      - name: Copy env
+        shell: bash
+        run: cp .env.example .env
+
+      - name: Build extension
+        run: pnpm build:chrome
+        env:
+          VITE_PUBLISHABLE_KEY: ${{ secrets.VITE_PUBLISHABLE_KEY }}
+          VITE_CLERK_FRONTEND_API: ${{ secrets.VITE_CLERK_FRONTEND_API }}
+          VITE_CRX_ID: ${{ secrets.VITE_CRX_ID }}
+          VITE_CRX_PUBLIC_KEY: ${{ secrets.VITE_CRX_PUBLIC_KEY }}
+          VITE_PUBLIC_CLERK_SYNC_HOST: ${{ secrets.VITE_PUBLIC_CLERK_SYNC_HOST }}
+          VITE_WEBSITE_URL: ${{ secrets.VITE_WEBSITE_URL }}
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+
+      - name: Create extension zip
+        run: |
+          cd apps/extension/dist_chrome
+          zip -r ../extension-${{ needs.release-please.outputs.version }}.zip .
+
+      - name: Add installation instructions to release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          CURRENT_BODY=$(gh release view ${{ needs.release-please.outputs.tag_name }} --json body --jq .body)
+          INSTALLATION_INSTRUCTIONS="
+
+          ## Installation
+          1. Download the \`extension-${{ needs.release-please.outputs.version }}.zip\` file below
+          2. Extract the zip file
+          3. Open Chrome and go to \`chrome://extensions/\`
+          4. Enable Developer mode (toggle in top-right)
+          5. Click \"Load unpacked\" and select the extracted folder
+
+          ## What's new in this version
+          Check the changelog above for detailed changes."
+
+          echo "$CURRENT_BODY$INSTALLATION_INSTRUCTIONS" > release_body.md
+          gh release edit ${{ needs.release-please.outputs.tag_name }} --notes-file release_body.md
+
+      - name: Upload extension to release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload ${{ needs.release-please.outputs.tag_name }} \
+            apps/extension/extension-${{ needs.release-please.outputs.version }}.zip \
+            --clobber
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: extension-${{ needs.release-please.outputs.version }}
+          path: |
+            apps/extension/extension-${{ needs.release-please.outputs.version }}.zip
+            apps/extension/dist_chrome
+          retention-days: 30
