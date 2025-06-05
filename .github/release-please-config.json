@@ -1,6 +1,5 @@
 {
   "release-type": "simple",
-  "tag-separator": "-v",
   "include-component-in-tag": true,
   "packages": {
     "apps/extension": {
