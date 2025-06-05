@@ -12,8 +12,8 @@ export const getBaseUrl = () => {
    * baseUrl to your production API URL.
    */
 
-  if (process.env.NODE_ENV === "production") {
-    return process.env.VITE_WEBSITE_URL;
+  if (import.meta.env.PROD) {
+    return import.meta.env.VITE_WEBSITE_URL;
   }
 
   return `http://localhost:3000`;
