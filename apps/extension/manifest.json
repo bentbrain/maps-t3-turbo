@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "key": "$VITE_CRX_ID",
+  "key": "$VITE_CRX_PUBLIC_KEY",
   "name": "Save locations to Notion",
   "description": "Save locations to Notion",
   "options_ui": {
