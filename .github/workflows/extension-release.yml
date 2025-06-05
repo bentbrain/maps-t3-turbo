@@ -1,9 +1,13 @@
 name: Extension Release
 
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
+    inputs:
+      create_release:
+        description: "Create extension release?"
+        required: true
+        default: "true"
+        type: boolean
 
 env:
   FORCE_COLOR: 3
