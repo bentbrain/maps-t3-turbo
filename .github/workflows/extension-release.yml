@@ -1,6 +1,8 @@
 name: Extension Release
 
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
     inputs:
       create_release:
@@ -14,6 +16,7 @@ env:
 
 jobs:
   release-please:
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -31,9 +34,32 @@ jobs:
           config-file: .github/release-please-config.json
           manifest-file: .github/.release-please-manifest.json
 
+  check-release:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
+      version: ${{ steps.release.outputs.version }}
+    steps:
+      - name: Run release-please on push
+        uses: googleapis/release-please-action@v4
+        id: release
+        with:
+          config-file: .github/release-please-config.json
+          manifest-file: .github/.release-please-manifest.json
+
   build-extension:
-    needs: release-please
-    if: needs.release-please.outputs.release_created
+    needs: [release-please, check-release]
+    if: |
+      always() && (
+        (needs.release-please.result == 'success' && needs.release-please.outputs.release_created == 'true') ||
+        (needs.check-release.result == 'success' && needs.check-release.outputs.release_created == 'true')
+      )
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -62,17 +88,21 @@ jobs:
       - name: Create extension zip
         run: |
           cd apps/extension/dist_chrome
-          zip -r ../extension-${{ needs.release-please.outputs.version }}.zip .
+          VERSION=${{ needs.release-please.outputs.version || needs.check-release.outputs.version }}
+          zip -r ../extension-${VERSION}.zip .
 
       - name: Add installation instructions to release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          CURRENT_BODY=$(gh release view ${{ needs.release-please.outputs.tag_name }} --json body --jq .body)
+          TAG_NAME=${{ needs.release-please.outputs.tag_name || needs.check-release.outputs.tag_name }}
+          VERSION=${{ needs.release-please.outputs.version || needs.check-release.outputs.version }}
+
+          CURRENT_BODY=$(gh release view ${TAG_NAME} --json body --jq .body)
           INSTALLATION_INSTRUCTIONS="
 
           ## Installation
-          1. Download the \`extension-${{ needs.release-please.outputs.version }}.zip\` file below
+          1. Download the \`extension-${VERSION}.zip\` file below
           2. Extract the zip file
           3. Open Chrome and go to \`chrome://extensions/\`
           4. Enable Developer mode (toggle in top-right)
@@ -82,21 +112,24 @@ jobs:
           Check the changelog above for detailed changes."
 
           echo "$CURRENT_BODY$INSTALLATION_INSTRUCTIONS" > release_body.md
-          gh release edit ${{ needs.release-please.outputs.tag_name }} --notes-file release_body.md
+          gh release edit ${TAG_NAME} --notes-file release_body.md
 
       - name: Upload extension to release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release upload ${{ needs.release-please.outputs.tag_name }} \
-            apps/extension/extension-${{ needs.release-please.outputs.version }}.zip \
+          TAG_NAME=${{ needs.release-please.outputs.tag_name || needs.check-release.outputs.tag_name }}
+          VERSION=${{ needs.release-please.outputs.version || needs.check-release.outputs.version }}
+
+          gh release upload ${TAG_NAME} \
+            apps/extension/extension-${VERSION}.zip \
             --clobber
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: extension-${{ needs.release-please.outputs.version }}
+          name: extension-${{ needs.release-please.outputs.version || needs.check-release.outputs.version }}
           path: |
-            apps/extension/extension-${{ needs.release-please.outputs.version }}.zip
+            apps/extension/extension-${{ needs.release-please.outputs.version || needs.check-release.outputs.version }}.zip
             apps/extension/dist_chrome
           retention-days: 30
