@@ -36,12 +36,6 @@ export default defineConfig((config: ConfigEnv) => {
         return value;
       }),
     );
-
-    // Remove the "key" property in production
-    if (mode === "production" && "key" in processed) {
-      delete processed.key;
-    }
-
     return processed;
   };
 

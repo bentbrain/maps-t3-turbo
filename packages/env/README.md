@@ -110,6 +110,7 @@ export const env = createEnv({
 4. Add the variable to `.env.example`
 
 Example:
+
 ```typescript
 // In src/env.ts
 export const env = createEnv({
