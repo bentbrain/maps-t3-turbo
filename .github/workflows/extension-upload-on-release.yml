@@ -1,0 +1,89 @@
+name: Upload Extension on Release
+
+on:
+  release:
+    types: [published]
+
+env:
+  FORCE_COLOR: 3
+
+jobs:
+  build-and-upload:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup
+        uses: ./tooling/github/setup
+
+      - name: Copy env
+        shell: bash
+        run: cp .env.example .env
+
+      - name: Build extension
+        run: pnpm build:chrome
+        env:
+          VITE_PUBLISHABLE_KEY: ${{ secrets.VITE_PUBLISHABLE_KEY }}
+          VITE_CLERK_FRONTEND_API: ${{ secrets.VITE_CLERK_FRONTEND_API }}
+          VITE_CRX_ID: ${{ secrets.VITE_CRX_ID }}
+          VITE_CRX_PUBLIC_KEY: ${{ secrets.VITE_CRX_PUBLIC_KEY }}
+          VITE_PUBLIC_CLERK_SYNC_HOST: ${{ secrets.VITE_PUBLIC_CLERK_SYNC_HOST }}
+          VITE_WEBSITE_URL: ${{ secrets.VITE_WEBSITE_URL }}
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+
+      - name: Create extension zip
+        run: |
+          cd apps/extension/dist_chrome
+          zip -r ../extension-${{ github.event.release.tag_name }}.zip .
+
+      - name: Remove source code assets from release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Remove source code assets that GitHub automatically adds
+          gh release view ${{ github.event.release.tag_name }} --json assets --jq '.assets[].name' | while read asset; do
+            if [[ "$asset" == *"Source code"* ]] || [[ "$asset" == *.tar.gz ]] || [[ "$asset" == *.zip && "$asset" != extension-* ]]; then
+              echo "Removing source asset: $asset"
+              gh api --method DELETE "/repos/${{ github.repository }}/releases/assets/$(gh api "/repos/${{ github.repository }}/releases/tags/${{ github.event.release.tag_name }}" --jq ".assets[] | select(.name == \"$asset\") | .id")" || true
+            fi
+          done
+
+      - name: Add installation instructions to release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          CURRENT_BODY=$(gh release view ${{ github.event.release.tag_name }} --json body --jq .body)
+          INSTALLATION_INSTRUCTIONS="
+
+          ## Installation
+          1. Download the \`extension-${{ github.event.release.tag_name }}.zip\` file below
+          2. Extract the zip file
+          3. Open Chrome and go to \`chrome://extensions/\`
+          4. Enable Developer mode (toggle in top-right)
+          5. Click \"Load unpacked\" and select the extracted folder
+
+          ## What's new in this version
+          Check the changelog above for detailed changes."
+
+          echo "$CURRENT_BODY$INSTALLATION_INSTRUCTIONS" > release_body.md
+          gh release edit ${{ github.event.release.tag_name }} --notes-file release_body.md
+
+      - name: Upload extension to release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload ${{ github.event.release.tag_name }} \
+            apps/extension/extension-${{ github.event.release.tag_name }}.zip \
+            --clobber
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: extension-${{ github.event.release.tag_name }}
+          path: |
+            apps/extension/extension-${{ github.event.release.tag_name }}.zip
+            apps/extension/dist_chrome
+          retention-days: 30
