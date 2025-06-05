@@ -1,181 +1,143 @@
-<div align="center">
-<img src="public/icon-128.png" alt="logo"/>
-<h1> Minimalist Chrome/Firefox Extension Boilerplate with<br/>React + Vite + TypeScript + TailwindCSS</h1>
+# Notion Locations Browser Extension
 
-<h5>
-This template repository is a side product of my Chrome Extension <a target="_blank" rel="noopener noreferrer" href="https://chrome.google.com/webstore/detail/supatabs/icbcnjlaegndjabnjbaeihnnmidbfigk">Supatabs</a>.
-<br />
-If you tend to have tons of tabs open, or are a OneTab user, make sure to check it out <a target="_blank" rel="noopener noreferrer" href="https://chrome.google.com/webstore/detail/supatabs/icbcnjlaegndjabnjbaeihnnmidbfigk">here</a>!
-</h5>
+A Chrome/Firefox extension that allows you to save locations from Google Maps directly to your Notion databases.
 
-<h5>Supatabs is an example and showcase of what you can develop with this template. (anything you want, really 🚀)</h5>
+## Features
 
-</div>
+- 🗺️ **One-click save**: Save any location from Google Maps to Notion with a single click
+- 📝 **Custom properties**: Add notes, categories, and ratings to your saved locations
+- 🔐 **Secure authentication**: Uses Clerk for secure authentication and sync with the web app
+- 🎨 **Modern UI**: Built with React, TypeScript, and Tailwind CSS
+- 🌐 **Cross-browser**: Works on both Chrome and Firefox with manifest v3
 
-## Table of Contents
+## Architecture
 
-- [Intro](#intro)
-- [Features](#features)
-- [Usage](#usage)
-  - [Getting Started](#gettingStarted) 
-  - [Customization](#customization)
-  - [Publish](#publish)
-- [Tech Docs](#tech)
-- [Credit](#credit)
-- [Contributing](#contributing)
+The extension consists of:
 
+- **Content Script**: Injected into Google Maps pages to detect and extract location information
+- **Background Service Worker**: Handles API communication and authentication
+- **Popup**: Quick interface for saving the current location with additional details
+- **Options Page**: Configure your Notion integration and preferences
 
-## Intro <a name="intro"></a>
-This boilerplate is meant to be a minimal quick start for creating chrome/firefox extensions using React, Typescript and Tailwind CSS.
+## Development
 
-It includes all possible pages such as **new tab**, **dev panel**, **pop up**, etc., as well as corresponding manifest settings by default.
-You will likely have to customize/delete some of the pages (see docs below).
+### Prerequisites
 
-You can build dist files for both Chrome and Firefox with manifest v3.
+- Node.js >= 22.14.0
+- pnpm >= 9.6.0
+- Chrome or Firefox browser
 
-If you are looking for a React focused way to access the local storage, I also implemented a chrome local/sync storage hook. The hook works
-well with this template. [Check it out here](https://gist.github.com/JohnBra/c81451ea7bc9e77f8021beb4f198ab96).
+### Setup
 
-## Features <a name="features"></a>
-- [React 19](https://reactjs.org/)
-- [TypeScript](https://www.typescriptlang.org/)
-- [Tailwind CSS 4](https://tailwindcss.com/)
-- [i18n (optional)](https://developer.chrome.com/docs/extensions/reference/api/i18n)
-- [Cross browser development with polyfill (optional)](https://github.com/mozilla/webextension-polyfill?tab=readme-ov-file#basic-setup-with-module-bundlers)
-- [ESLint](https://eslint.org/)
-- [Chrome Extension Manifest Version 3](https://developer.chrome.com/docs/extensions/mv3/intro/)
-- [Github Action](https://github.com/JohnBra/vite-web-extension/actions/workflows/ci.yml) to build and zip your extension (manual trigger)
-
-## Usage <a name="usage"></a>
-
-### Getting Started <a name="gettingStarted"></a>
-
-#### Developing and building
-This template comes with build configs for both Chrome and Firefox. Running
-`dev` or `build` commands without specifying the browser target will build
-for Chrome by default.
-
-1. Clone this repository or click "Use this template"
-2. Change `name` and `description` in `manifest.json`
-3. Run `yarn` or `npm i` (check your node version >= 16)
-4. Run `yarn dev[:chrome|:firefox]`, or `npm run dev[:chrome|:firefox]`
-
-Running a `dev` command will build your extension and watch for changes in the 
-source files. Changing the source files will refresh the corresponding 
-`dist_<chrome|firefox>` folder.
-
-To create an optimized production build, run `yarn build[:chrome|:firefox]`, or
-`npm run build[:chrome|:firefox]`.
-
-#### Load your extension
-For Chrome
-1. Open - Chrome browser
-2. Access - [chrome://extensions](chrome://extensions)
-3. Tick - Developer mode
-4. Find - Load unpacked extension
-5. Select - `dist_chrome` folder in this project (after dev or build)
-
-For Firefox
-1. Open - Firefox browser
-2. Access - [about:debugging#/runtime/this-firefox](about:debugging#/runtime/this-firefox)
-3. Click - Load temporary Add-on
-4. Select - any file in `dist_firefox` folder (i.e. `manifest.json`) in this project (after dev or build)
-
-### Customization <a name="customization"></a>
-
-#### Adding / removing pages
-The template includes source code for **all** of the extension pages (i.e. New Tab, Dev Tools, Popup, Side Panel
-etc.). You will likely have to customize it to fit your needs.
-
-E.g. you don't want the newtab page to activate whenever you open a new tab:
-1. remove the directory `newtab` and its contents in `src/pages`
-2. remove `chrome_url_overrides: { newtab: 'src/pages/newtab/index.html' },` in `manifest.json`
-
-Some pages like the "Side Panel" don't work the exact same in Chrome and Firefox. While this template includes
-the source code for the side panel, it won't automatically be included in the dist file to prevent cross browser
-build warnings.
-
-To include the side panel for Chrome add the following to the `manifest.json`:
-
-```typescript
-{
-  "manifest_version": 3,
-  // ...
-  "permissions": [
-    "activeTab",
-    "sidePanel" // <-- permission for sidepanel
-  ],
-  // ...
-  "side_panel": {
-    "default_path": "src/pages/panel/index.html" // <-- tell vite to include it in the build files
-  },
-  // ...
-}
+1. Install dependencies:
+```bash
+pnpm install
 ```
 
-If you need to declare pages in addition to the manifest pages, e.g. a custom `app` page, create a 
-new folder in the `pages` directory and add the corresponding `.html`, `.tsx` and `.css` 
-files (see `options/*` for an example to copy). Then include the root html in the `vite.config.base.ts` 
-file under `build.rollupOptions.input` like so:
-
-```typescript
-// ...
-build: {
-   rollupOptions: {
-      input: {
-         app: resolve(pagesDir, "app", "index.html"),
-      },
-      output: {
-         entryFileNames: (chunk) => `src/pages/${chunk.name}/index.js`,
-      },
-   },
-}
-// ...
+2. Set up environment variables in the root `.env` file:
+```bash
+VITE_PUBLISHABLE_KEY=your-clerk-publishable-key
+VITE_CLERK_FRONTEND_API=your-clerk-frontend-api
+VITE_CRX_ID=your-extension-id
+VITE_CRX_PUBLIC_KEY=your-extension-public-key
+VITE_PUBLIC_CLERK_SYNC_HOST=your-clerk-sync-host
+VITE_WEBSITE_URL=your-website-url
+VITE_API_URL=your-api-url
 ```
 
-#### Styling
-CSS files in the `src/pages/*` directories are not necessary. They are left in there in case you want 
-to use it in combination with Tailwind CSS. **Feel free to delete them**.
+### Development Commands
 
-Tailwind can be configured, themed and extended according to the [docs](https://tailwindcss.com/docs/theme).
+```bash
+# Run in development mode (Chrome)
+pnpm dev
+# or
+pnpm dev:chrome
 
-#### Internationalization (i18n)
-To enable internationalization set the `localize` flag in the `vite.config.base.ts` to `true`.
+# Run in development mode (Firefox)
+pnpm dev:firefox
 
-The template includes a directory `locales` with a basic setup for english i18n. Enabling i18n
-will pull the name and description for your extension from the english translation files instead
-of the manifest.
+# Build for production (Chrome)
+pnpm build
+# or
+pnpm build:chrome
 
-Follow the instructions in the [official docs](https://developer.chrome.com/docs/extensions/reference/api/i18n#description) 
-to add other translations and retrieve them in the extension.
+# Build for production (Firefox)
+pnpm build:firefox
 
-If you don't need i18n you can ignore the `locales` directory until you need it, as it won't
-be copied into the build folder unless the `localize` flag is set to `true`.
+# Type checking
+pnpm check-types
+```
 
-### Publish your extension to the CWS<a name="publish"></a>
-To upload an extension to the Chrome store you have to pack (zip) it and then upload it to your item 
-in the Chrome Web Store.
+### Loading the Extension
 
-This repo includes a Github Action Workflow to create a 
-[optimized prod build and the zip file](https://github.com/JohnBra/vite-web-extension/actions/workflows/ci.yml).
+#### Chrome
+1. Navigate to `chrome://extensions/`
+2. Enable "Developer mode"
+3. Click "Load unpacked"
+4. Select the `dist_chrome` folder
 
-To run the workflow do the following:
-1. Go to the **"Actions"** tab in your forked repository from this template
-2. In the left sidebar click on **"Build and Zip Chrome Extension"**
-3. Click on **"Run Workflow"** and select the main branch, then **"Run Workflow"**
-4. Refresh the page and click the most recent run
-5. In the summary page **"Artifacts"** section click on the generated **"vite-web-extension-chrome"**
-6. Upload this file to the Chrome Web Store as described [here](https://developer.chrome.com/docs/webstore/publish/)
+#### Firefox
+1. Navigate to `about:debugging`
+2. Click "This Firefox"
+3. Click "Load Temporary Add-on"
+4. Select any file in the `dist_firefox` folder
 
-# Tech Docs <a name="tech"></a>
-- [Vite](https://vitejs.dev/)
-- [Vite Plugins](https://vitejs.dev/guide/api-plugin.html)
-- [Chrome Extension with manifest 3](https://developer.chrome.com/docs/extensions/mv3/)
-- [Chrome Extension i18n](https://developer.chrome.com/docs/extensions/reference/api/i18n#description)
-- [Cross browser development with webextension-polyfill](https://github.com/mozilla/webextension-polyfill?tab=readme-ov-file#webextension-browser-api-polyfill)
-- [@crxjs/vite-plugin](https://crxjs.dev/vite-plugin)
-- [Rollup](https://rollupjs.org/guide/en/)
-- [Tailwind CSS 4](https://tailwindcss.com/docs/configuration)
+## Project Structure
 
-# Contributing <a name="contributing"></a>
-Feel free to open PRs or raise issues!
+```
+apps/extension/
+├── public/              # Static assets (icons, etc.)
+├── src/
+│   ├── pages/
+│   │   ├── background/  # Service worker
+│   │   ├── content/     # Content script for Google Maps
+│   │   ├── options/     # Options page
+│   │   └── popup/       # Extension popup
+│   ├── utils/           # Shared utilities
+│   └── lib/             # API and authentication logic
+├── manifest.json        # Extension manifest
+├── vite.config.*.ts     # Vite configurations
+└── package.json
+```
+
+## Key Technologies
+
+- **React 19** - UI framework
+- **TypeScript** - Type safety
+- **Vite** - Build tool with CRXJS plugin
+- **Tailwind CSS** - Styling
+- **Clerk** - Authentication
+- **Notion API** - Database integration
+- **Chrome Extensions Manifest V3** - Extension platform
+
+## Permissions
+
+The extension requires the following permissions:
+
+- `activeTab` - Access current tab information
+- `tabs` - Navigate and interact with tabs
+- `storage` - Store user preferences
+- `cookies` - Authentication state management
+
+Host permissions:
+- `*://*.google.com/maps/*` - Interact with Google Maps
+- `https://api.notion.com/*` - Save to Notion
+- Clerk authentication endpoints
+
+## Building for Production
+
+Production builds are handled by the GitHub Actions workflow. When a release is created, the extension is automatically built and attached to the release.
+
+Manual production build:
+```bash
+# Build for Chrome
+pnpm build:chrome
+
+# The built extension will be in dist_chrome/
+# Create a zip for distribution:
+cd dist_chrome && zip -r ../notion-locations-chrome.zip .
+```
+
+## Contributing
+
+See the main repository README for contribution guidelines.
