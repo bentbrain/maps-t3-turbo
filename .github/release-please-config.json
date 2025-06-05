@@ -68,7 +68,7 @@
       "extra-files": [
         {
           "type": "json",
-          "path": "manifest.json",
+          "path": "package.json",
           "jsonpath": "$.version"
         }
       ]
