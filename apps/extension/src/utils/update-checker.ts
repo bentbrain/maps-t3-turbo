@@ -25,7 +25,7 @@ interface StoredUpdateInfo {
   updateInfo?: UpdateInfo;
 }
 
-const GITHUB_REPO = "your-username/maps-t3-turbo"; // Update this with your actual repo
+const GITHUB_REPO = "bentbrain/maps-t3-turbo"; // Update this with your actual repo
 const CHECK_INTERVAL = 4 * 60 * 60 * 1000; // 4 hours in milliseconds
 const STORAGE_KEY = "extensionUpdateInfo";
 
