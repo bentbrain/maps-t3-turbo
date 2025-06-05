@@ -1,4 +1,4 @@
-name: Extension Release
+name: Create Release PR
 
 on:
   push:
@@ -26,3 +26,4 @@ jobs:
         with:
           config-file: .github/release-please-config.json
           manifest-file: .github/.release-please-manifest.json
+          token: ${{ secrets.PAT_TOKEN }}

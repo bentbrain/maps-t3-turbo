@@ -44,10 +44,14 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           # Remove source code assets that GitHub automatically adds
+          sleep 5  # Wait for GitHub to add the source assets
           gh release view ${{ github.event.release.tag_name }} --json assets --jq '.assets[].name' | while read asset; do
             if [[ "$asset" == *"Source code"* ]] || [[ "$asset" == *.tar.gz ]] || [[ "$asset" == *.zip && "$asset" != extension-* ]]; then
               echo "Removing source asset: $asset"
-              gh api --method DELETE "/repos/${{ github.repository }}/releases/assets/$(gh api "/repos/${{ github.repository }}/releases/tags/${{ github.event.release.tag_name }}" --jq ".assets[] | select(.name == \"$asset\") | .id")" || true
+              asset_id=$(gh api "/repos/${{ github.repository }}/releases/tags/${{ github.event.release.tag_name }}" --jq ".assets[] | select(.name == \"$asset\") | .id")
+              if [ ! -z "$asset_id" ]; then
+                gh api --method DELETE "/repos/${{ github.repository }}/releases/assets/$asset_id" || true
+              fi
             fi
           done
 
