@@ -37,21 +37,19 @@ jobs:
       - name: Create extension zip
         run: |
           cd apps/extension/dist_chrome
-          zip -r ../extension-${{ github.event.release.tag_name }}.zip .
+          zip -r ../notion-locations-${{ github.event.release.tag_name }}.zip .
 
-      - name: Remove source code assets from release
+      - name: Remove all existing assets from release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Remove source code assets that GitHub automatically adds
-          sleep 5  # Wait for GitHub to add the source assets
-          gh release view ${{ github.event.release.tag_name }} --json assets --jq '.assets[].name' | while read asset; do
-            if [[ "$asset" == *"Source code"* ]] || [[ "$asset" == *.tar.gz ]] || [[ "$asset" == *.zip && "$asset" != extension-* ]]; then
-              echo "Removing source asset: $asset"
-              asset_id=$(gh api "/repos/${{ github.repository }}/releases/tags/${{ github.event.release.tag_name }}" --jq ".assets[] | select(.name == \"$asset\") | .id")
-              if [ ! -z "$asset_id" ]; then
-                gh api --method DELETE "/repos/${{ github.repository }}/releases/assets/$asset_id" || true
-              fi
+          # Remove all assets (including source code) from the release before uploading our extension
+          sleep 5  # Wait for GitHub to add any auto-generated assets
+          echo "Removing all existing assets from release..."
+          gh release view ${{ github.event.release.tag_name }} --json assets --jq '.assets[].id' | while read asset_id; do
+            if [ ! -z "$asset_id" ]; then
+              echo "Removing asset with ID: $asset_id"
+              gh api --method DELETE "/repos/${{ github.repository }}/releases/assets/$asset_id" || true
             fi
           done
 
@@ -63,7 +61,7 @@ jobs:
           INSTALLATION_INSTRUCTIONS="
 
           ## Installation
-          1. Download the \`extension-${{ github.event.release.tag_name }}.zip\` file below
+          1. Download the \`notion-locations-${{ github.event.release.tag_name }}.zip\` file below
           2. Extract the zip file
           3. Open Chrome and go to \`chrome://extensions/\`
           4. Enable Developer mode (toggle in top-right)
@@ -80,14 +78,14 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release upload ${{ github.event.release.tag_name }} \
-            apps/extension/extension-${{ github.event.release.tag_name }}.zip \
+            apps/extension/notion-locations-${{ github.event.release.tag_name }}.zip \
             --clobber
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: extension-${{ github.event.release.tag_name }}
+          name: notion-locations-${{ github.event.release.tag_name }}
           path: |
-            apps/extension/extension-${{ github.event.release.tag_name }}.zip
+            apps/extension/notion-locations-${{ github.event.release.tag_name }}.zip
             apps/extension/dist_chrome
           retention-days: 30
