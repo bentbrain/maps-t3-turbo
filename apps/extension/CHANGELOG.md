@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.1.4](https://github.com/bentbrain/maps-t3-turbo/compare/extension-v1.1.3...extension-v1.1.4) (2025-06-05)
+
+
+### Bug Fixes
+
+* fix key env var ([ebcbbcf](https://github.com/bentbrain/maps-t3-turbo/commit/ebcbbcfbadb539a3e55f24a8ba4e744e5e8151b2))
+* fix key env var ([864f63f](https://github.com/bentbrain/maps-t3-turbo/commit/864f63fbe4e8e16f74a6b9a1ff1ad6160730e081))
+
 ## [1.1.3](https://github.com/bentbrain/maps-t3-turbo/compare/extension-v1.1.2...extension-v1.1.3) (2025-06-05)
 
 
