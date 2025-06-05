@@ -12,11 +12,9 @@ export const getBaseUrl = () => {
    * baseUrl to your production API URL.
    */
 
-  //   if (process.env.NODE_ENV === "production") {
-  //     // return "https://turbo.t3.gg";
-  //     throw new Error(
-  //       "Failed to get localhost. Please point to your production server.",
-  //     );
-  //   }
+  if (process.env.NODE_ENV === "production") {
+    return process.env.VITE_WEBSITE_URL;
+  }
+
   return `http://localhost:3000`;
 };
