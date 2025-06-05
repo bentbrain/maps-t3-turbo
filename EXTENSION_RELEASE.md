@@ -12,12 +12,13 @@ The extension release system includes:
 
 ## Release Process
 
-The extension uses **Google's release-please** for automated releases based on conventional commits. This provides:
-- Automatic version bumping based on commit types
-- Professional changelog generation
+The extension uses **Google's release-please** for manual releases with excellent changelog generation. This provides:
+- Manual control through GitHub UI
+- Professional changelog generation from conventional commits
+- Automatic version bumping based on commit analysis
 - Streamlined release workflow
 
-### Method 1: Conventional Commits (Recommended)
+### Method 1: GitHub UI Manual Release (Recommended)
 
 1. **Make your changes and commit using conventional format**:
    ```bash
@@ -26,11 +27,17 @@ The extension uses **Google's release-please** for automated releases based on c
    git push origin main
    ```
 
-2. **Release-please automatically**:
-   - Analyzes your commits since the last release
-   - Determines the next version (major/minor/patch) based on commit types
-   - Creates or updates a release PR with changelog
-   - When you merge the PR, it creates the release and builds the extension
+2. **Trigger release manually through GitHub**:
+   - Go to your repository's Actions tab
+   - Click "Extension Release" workflow
+   - Click "Run workflow" 
+   - Choose release type (auto/patch/minor/major)
+   - Click "Run workflow" button
+
+3. **Release-please will**:
+   - Analyze your commits since the last release
+   - Generate professional changelog with proper grouping
+   - Create the release and build the extension automatically
 
 ### Commit Types and Version Bumps
 
@@ -161,15 +168,14 @@ git add .
 git commit -m "feat(extension): add new location saving feature"
 git push origin main
 
-# 2. Check for release PR
-# Go to GitHub and look for the release-please PR
-# Review the changelog and version bump
+# 2. Go to GitHub Actions and trigger release
+# Actions tab → Extension Release → Run workflow → Choose "auto" → Run workflow
 
-# 3. Merge the release PR
-# This triggers the build and creates the actual release
+# 3. Release-please creates the release automatically
+# Check GitHub Releases for the new version with changelog
 
 # 4. Verify
-# Check GitHub releases for the new version
+# Download the extension zip and test
 # Test the update notification in development
 ```
 
