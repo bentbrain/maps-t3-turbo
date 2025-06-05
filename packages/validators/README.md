@@ -11,6 +11,7 @@ This package contains all the Zod schemas used across the monorepo for runtime v
 ### Location Schemas
 
 #### `newPlaceSchema`
+
 Validates data when creating a new location:
 
 ```typescript
@@ -84,6 +85,7 @@ if (result.success) {
 
 ```typescript
 import type { z } from "zod";
+
 import { newPlaceSchema } from "@acme/validators/new-place-schema";
 
 // Infer TypeScript type from schema
@@ -100,8 +102,9 @@ function saveLocation(place: NewPlace) {
 With react-hook-form and @hookform/resolvers:
 
 ```typescript
-import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+
 import { newPlaceSchema } from "@acme/validators/new-place-schema";
 
 function LocationForm() {
@@ -129,6 +132,7 @@ function LocationForm() {
 5. Add documentation
 
 Example:
+
 ```typescript
 // src/user-settings-schema.ts
 import { z } from "zod";

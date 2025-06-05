@@ -37,11 +37,13 @@ A Next.js web application for viewing and managing locations saved from Google M
 ### Setup
 
 1. Install dependencies from the root directory:
+
 ```bash
 pnpm install
 ```
 
 2. Configure environment variables in the root `.env` file:
+
 ```bash
 # Clerk Authentication
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=your-clerk-publishable-key
@@ -107,21 +109,25 @@ apps/nextjs/
 ## Key Features Implementation
 
 ### Map Visualization
+
 - Interactive Google Maps with custom markers
 - Marker clustering for better performance with many locations
 - Click markers to view location details
 
 ### Notion Integration
+
 - Real-time sync with Notion databases
 - Rich content rendering for location descriptions
 - Support for various Notion block types
 
 ### Search and Filtering
+
 - Fuzzy search across location names and descriptions
 - Filter by categories or tags
 - Sort by date added or alphabetically
 
 ### User Experience
+
 - Responsive design works on desktop and mobile
 - Dark mode support
 - Fast page loads with Next.js optimization
@@ -129,15 +135,15 @@ apps/nextjs/
 
 ## Environment Variables
 
-| Variable | Description | Required |
-|----------|-------------|----------|
-| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk public key | Yes |
-| `CLERK_SECRET_KEY` | Clerk secret key | Yes |
-| `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` | Google Maps API key | Yes |
-| `NOTION_API_KEY` | Notion integration token | Yes |
-| `NEXT_PUBLIC_APP_URL` | Application URL | Yes |
-| `NEXT_PUBLIC_POSTHOG_KEY` | PostHog project key | No |
-| `NEXT_PUBLIC_POSTHOG_HOST` | PostHog host URL | No |
+| Variable                            | Description              | Required |
+| ----------------------------------- | ------------------------ | -------- |
+| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk public key         | Yes      |
+| `CLERK_SECRET_KEY`                  | Clerk secret key         | Yes      |
+| `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY`   | Google Maps API key      | Yes      |
+| `NOTION_API_KEY`                    | Notion integration token | Yes      |
+| `NEXT_PUBLIC_APP_URL`               | Application URL          | Yes      |
+| `NEXT_PUBLIC_POSTHOG_KEY`           | PostHog project key      | No       |
+| `NEXT_PUBLIC_POSTHOG_HOST`          | PostHog host URL         | No       |
 
 ## Deployment
 

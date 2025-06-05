@@ -9,6 +9,7 @@ This package provides the tRPC router definitions and procedures that power the 
 ## Architecture
 
 The API is built with:
+
 - **tRPC v11** - End-to-end typesafe APIs
 - **Notion SDK** - Official Notion API client
 - **Clerk** - Authentication middleware
@@ -34,6 +35,7 @@ export const appRouter = createTRPCRouter({
 ```
 
 ### Location Router
+
 - `create` - Save a new location to Notion
 - `list` - Get all user's saved locations
 - `get` - Get a specific location by ID
@@ -41,11 +43,13 @@ export const appRouter = createTRPCRouter({
 - `delete` - Remove a location
 
 ### Notion Router
+
 - `getDatabases` - List available Notion databases
 - `getPage` - Fetch Notion page content
 - `search` - Search across Notion workspace
 
 ### User Router
+
 - `getProfile` - Get user profile and settings
 - `updateSettings` - Update user preferences
 
@@ -59,7 +63,7 @@ import { api } from "@/trpc/client";
 // In a React component
 function LocationList() {
   const { data: locations } = api.location.list.useQuery();
-  
+
   const createLocation = api.location.create.useMutation({
     onSuccess: () => {
       // Handle success
@@ -76,10 +80,13 @@ function LocationList() {
 
 ```typescript
 import { createTRPCProxyClient } from "@trpc/client";
+
 import type { AppRouter } from "@acme/api";
 
 const client = createTRPCProxyClient<AppRouter>({
-  links: [/* ... */],
+  links: [
+    /* ... */
+  ],
 });
 
 // Use the client
@@ -129,12 +136,14 @@ pnpm format
 ## Environment Variables
 
 Required environment variables:
+
 - `NOTION_API_KEY` - Notion integration token
 - `CLERK_SECRET_KEY` - Clerk secret key for authentication
 
 ## Contributing
 
 When adding new procedures:
+
 1. Define the input schema using Zod
 2. Implement the procedure logic
 3. Add appropriate error handling
