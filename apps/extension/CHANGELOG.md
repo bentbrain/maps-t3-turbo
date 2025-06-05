@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.1.3](https://github.com/bentbrain/maps-t3-turbo/compare/extension-v1.1.2...extension-v1.1.3) (2025-06-05)
+
+
+### Bug Fixes
+
+* use env var for api base url ([e81cfb7](https://github.com/bentbrain/maps-t3-turbo/commit/e81cfb7d85078044fea9ea2ff7e0d2ffba16e84e))
+* use env var for api base url ([2d234f3](https://github.com/bentbrain/maps-t3-turbo/commit/2d234f381bdde737fc19e6bca38f147f4d7b2f7c))
+
 ## [1.1.2](https://github.com/bentbrain/maps-t3-turbo/compare/extension-v1.1.1...extension-v1.1.2) (2025-06-05)
 
 
