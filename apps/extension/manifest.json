@@ -19,6 +19,7 @@
   "host_permissions": [
     "*://*.google.com/maps/*",
     "https://api.notion.com/*",
+    "https://api.github.com/*",
     "$VITE_PUBLIC_CLERK_SYNC_HOST/*",
     "$VITE_CLERK_FRONTEND_API/*"
   ],
