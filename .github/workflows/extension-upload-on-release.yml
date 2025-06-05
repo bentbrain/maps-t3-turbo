@@ -53,26 +53,6 @@ jobs:
             fi
           done
 
-      - name: Add installation instructions to release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          CURRENT_BODY=$(gh release view ${{ github.event.release.tag_name }} --json body --jq .body)
-          INSTALLATION_INSTRUCTIONS="
-
-          ## Installation
-          1. Download the \`notion-locations-${{ github.event.release.tag_name }}.zip\` file below
-          2. Extract the zip file
-          3. Open Chrome and go to \`chrome://extensions/\`
-          4. Enable Developer mode (toggle in top-right)
-          5. Click \"Load unpacked\" and select the extracted folder
-
-          ## What's new in this version
-          Check the changelog above for detailed changes."
-
-          echo "$CURRENT_BODY$INSTALLATION_INSTRUCTIONS" > release_body.md
-          gh release edit ${{ github.event.release.tag_name }} --notes-file release_body.md
-
       - name: Upload extension to release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
