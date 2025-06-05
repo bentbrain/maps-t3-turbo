@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.1.1](https://github.com/bentbrain/maps-t3-turbo/compare/extension-v1.1.0...extension-v1.1.1) (2025-06-05)
+
+
+### Bug Fixes
+
+* **extension:** leave extension key in manifest for build ([5ab2456](https://github.com/bentbrain/maps-t3-turbo/commit/5ab245699609f046ca7942fd40510b111ae2cac6))
+* **extension:** leave extension key in manifest for build ([aca40c4](https://github.com/bentbrain/maps-t3-turbo/commit/aca40c4312e78b0fdde491d8d7479cfe8ca4de30))
+
+
+### Documentation
+
+* updated README's using cursor background agent ([c8f8e2d](https://github.com/bentbrain/maps-t3-turbo/commit/c8f8e2d94e56acff5ab8e1f0d2379865d9a6fecb))
+
 ## [1.1.0](https://github.com/bentbrain/maps-t3-turbo/compare/extension-v1.0.0...extension-v1.1.0) (2025-06-05)
 
 
