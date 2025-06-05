@@ -20,8 +20,7 @@
     "lint:ws": "pnpm dlx sherif@latest",
     "postinstall": "pnpm lint:ws",
     "typecheck": "turbo run typecheck",
-    "ui-add": "turbo run ui-add",
-    "release:extension": "./scripts/release-extension.sh"
+    "ui-add": "turbo run ui-add"
   },
   "devDependencies": {
     "@acme/prettier-config": "workspace:*",

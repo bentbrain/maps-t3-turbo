@@ -7,6 +7,17 @@
       "component": "extension",
       "release-type": "simple",
       "package-name": "extension",
+      "include-paths": [
+        "apps/extension",
+        "packages/api",
+        "packages/env",
+        "packages/ui",
+        "packages/validators",
+        "tooling/eslint-config",
+        "package.json",
+        "pnpm-workspace.yaml",
+        "turbo.json"
+      ],
       "changelog-sections": [
         {
           "type": "feat",
