@@ -193,7 +193,7 @@ export default async function Home() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <Button className="w-full bg-blue-600 hover:bg-blue-700" asChild>
-                    <Link href="/api/releases/download-latest" target="_blank">
+                    <Link href="https://github.com/bentbrain/maps-t3-turbo/releases/latest" target="_blank" rel="noopener noreferrer">
                       <Download className="w-4 h-4 mr-2" />
                       Download Latest Release
                     </Link>
