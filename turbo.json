@@ -52,6 +52,7 @@
     "CLERK_SECRET_KEY",
     "NODE_ENV",
     "CHROME_EXECUTABLE_PATH",
+    "GITHUB_PAT",
     "NEXT_PUBLIC_*"
   ],
   "globalPassThroughEnv": [

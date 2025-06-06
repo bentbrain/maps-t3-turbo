@@ -3,16 +3,17 @@ import { useQuery } from "@tanstack/react-query";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import Browser from "webextension-polyfill";
 
+import { AuthGuard } from "./components/auth-guard";
 import { RootLayout } from "./layouts/root-layout";
 import LocationForm from "./location-form";
-import { Home } from "./routes/home";
+import { SignInPage } from "./routes/signin";
 
 async function getCurrentTab() {
   const [tab] = await Browser.tabs.query({ active: true, currentWindow: true });
   return tab;
 }
 
-function useRoutes() {
+function Router() {
   const { data: currentTab } = useQuery({
     queryKey: ["currentTab"],
     queryFn: getCurrentTab,
@@ -20,30 +21,42 @@ function useRoutes() {
 
   const url = currentTab?.url ? new URL(currentTab.url) : null;
 
-  // Base routes that are always available
-  const baseRoutes = [{ path: "/", element: <Home /> }];
-
-  // Add location form route only for Google Maps
-  if (url?.hostname.includes("google.com") && url?.pathname.includes("/maps")) {
-    baseRoutes.push({ path: "/location", element: <LocationForm /> });
-  }
-
-  // Add other website-specific routes here
-  // Example:
-  // if (url?.hostname.includes("notion.so")) {
-  //   baseRoutes.push({ path: "/notion", element: <NotionView /> });
-  // }
-
-  return baseRoutes;
-}
-
-function Router() {
-  const routes = useRoutes();
-
   const router = createMemoryRouter([
     {
+      path: "/",
       element: <RootLayout />,
-      children: routes,
+      children: [
+        {
+          index: true,
+          element: (
+            <AuthGuard>
+              <LocationForm />
+            </AuthGuard>
+          ),
+        },
+        {
+          path: "signin",
+          element: (
+            <AuthGuard>
+              <SignInPage />
+            </AuthGuard>
+          ),
+        },
+        // Add location form route only for Google Maps
+        ...(url?.hostname.includes("google.com") &&
+        url?.pathname.includes("/maps")
+          ? [
+              {
+                path: "location",
+                element: (
+                  <AuthGuard>
+                    <LocationForm />
+                  </AuthGuard>
+                ),
+              },
+            ]
+          : []),
+      ],
     },
   ]);
 

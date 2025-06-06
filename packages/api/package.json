@@ -24,6 +24,7 @@
     "@acme/validators": "workspace:*",
     "@clerk/nextjs": "^6.19.4",
     "@notionhq/client": "^3.0.1",
+    "@octokit/rest": "^22.0.0",
     "@trpc/server": "catalog:",
     "next": "catalog:",
     "notion-client": "^7.3.0",

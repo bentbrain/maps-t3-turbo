@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useTRPC } from "@/utils/react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { Check, LoaderCircle, X } from "lucide-react";
+import { Check, LoaderCircle, Map, X } from "lucide-react";
 import { useForm } from "react-hook-form";
 import Browser from "webextension-polyfill";
 
@@ -45,6 +45,19 @@ interface LocationData {
   [key: string]: string | string[] | undefined;
 }
 
+async function checkIsOnGoogleMaps(): Promise<boolean> {
+  try {
+    const [tab] = await Browser.tabs.query({
+      active: true,
+      currentWindow: true,
+    });
+    return !!tab?.url?.includes("google.com/maps");
+  } catch (error) {
+    console.error("Error checking current tab:", error);
+    return false;
+  }
+}
+
 async function fetchLocationData(): Promise<LocationData> {
   try {
     const [tab] = await Browser.tabs.query({
@@ -71,6 +84,17 @@ async function fetchLocationData(): Promise<LocationData> {
     return response;
   } catch (error) {
     console.error("Error getting location data:", error);
+
+    // Handle specific Chrome extension connection errors
+    if (
+      error instanceof Error &&
+      error.message.includes("Could not establish connection")
+    ) {
+      throw new Error(
+        "Extension not ready. Please refresh this Google Maps page and try again.",
+      );
+    }
+
     throw error;
   }
 }
@@ -80,7 +104,6 @@ export default function LocationForm() {
   const [emojiOpen, setEmojiOpen] = useState(false);
   const [successUrl, setSuccessUrl] = useState<string | null>(null);
   const trpc = useTRPC();
-
   const searchRef = useRef<HTMLInputElement>(null);
 
   const createUserMutation = useMutation(
@@ -115,7 +138,14 @@ export default function LocationForm() {
     },
   });
 
-  // Query for location data
+  // Check if we're on Google Maps
+  const { data: isOnGoogleMaps = false } = useQuery({
+    queryKey: ["isOnGoogleMaps"],
+    queryFn: checkIsOnGoogleMaps,
+    staleTime: 1000 * 10, // 10 seconds
+  });
+
+  // Query for location data - only when on Google Maps
   const {
     data: locationData,
     error: locationError,
@@ -125,6 +155,7 @@ export default function LocationForm() {
     queryFn: fetchLocationData,
     retry: 2,
     retryDelay: 1000,
+    enabled: isOnGoogleMaps, // Only fetch when on Google Maps
   });
 
   // Update form when location data changes
@@ -162,16 +193,23 @@ export default function LocationForm() {
     }
   }, [emojiOpen]);
 
-  if (!selectedDatabaseId) {
-    return (
-      <div className="flex items-center justify-center">
-        <p>No database selected</p>
-      </div>
-    );
-  }
+  // Handle errors
+  useEffect(() => {
+    if (locationError) {
+      console.error("Location error:", locationError);
+      form.setError("root", {
+        message:
+          locationError instanceof Error
+            ? locationError.message
+            : "Failed to fetch location data",
+      });
+    }
+  }, [locationError, form]);
 
   // Handle form submission
   const onSubmit = (values: any) => {
+    if (!selectedDatabaseId) return; // Guard clause
+
     createUserMutation.mutate(
       {
         databaseId: selectedDatabaseId,
@@ -188,18 +226,27 @@ export default function LocationForm() {
     );
   };
 
-  // Handle errors
-  useEffect(() => {
-    if (locationError) {
-      console.error("Location error:", locationError);
-      form.setError("root", {
-        message:
-          locationError instanceof Error
-            ? locationError.message
-            : "Failed to fetch location data",
-      });
-    }
-  }, [locationError, form]);
+  // Conditional rendering after all hooks
+  if (!selectedDatabaseId || !selectedDatabase) {
+    return (
+      <div className="flex items-center justify-center">
+        <p>No database selected</p>
+      </div>
+    );
+  }
+
+  // Show message when not on Google Maps
+  if (!isOnGoogleMaps) {
+    return (
+      <div className="p-2">
+        <Button className="w-full justify-start px-4! text-left" asChild>
+          <a href="https://www.google.com/maps" target="_blank">
+            <Map className="mr-2 h-4 w-4" /> Open Google Maps
+          </a>
+        </Button>
+      </div>
+    );
+  }
 
   if (isLocationLoading || isLoading) {
     return (
@@ -262,14 +309,6 @@ export default function LocationForm() {
             Add Another Location
           </Button>
         </div>
-      </div>
-    );
-  }
-
-  if (!selectedDatabase) {
-    return (
-      <div className="flex items-center justify-center">
-        <p>No database selected</p>
       </div>
     );
   }

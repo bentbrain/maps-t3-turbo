@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Download, ExternalLink, X } from "lucide-react";
 
 import type { UpdateInfo } from "../utils/update-checker";
