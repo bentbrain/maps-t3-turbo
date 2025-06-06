@@ -1,16 +1,14 @@
 import React, { createContext, useContext } from "react";
 import { trpcClient } from "@/utils/api";
-import { ClerkProvider, SignedIn } from "@clerk/chrome-extension";
+import { ClerkProvider, useUser } from "@clerk/chrome-extension";
 import { DatabaseObjectResponse } from "@notionhq/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Check } from "lucide-react";
 import { Outlet, useNavigate } from "react-router";
 import Browser from "webextension-polyfill";
 
-import { Button } from "@acme/ui/button";
-import { Popover, PopoverContent, PopoverTrigger } from "@acme/ui/popover";
 import { Skeleton } from "@acme/ui/skeleton";
 
+import { DatabaseSelect } from "../../../components/DatabaseSelect";
 import { UpdateNotification } from "../../../components/UpdateNotification";
 import { getSelectedDatabaseId } from "../helpers";
 
@@ -93,28 +91,27 @@ const DataProvider = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
-function DatabaseSelect() {
-  const { userDatabases, isLoading, error, selectedDatabaseId } =
-    useDataContext();
-  const [open, setOpen] = React.useState(false);
+function DatabaseSelectWrapper() {
+  const { isSignedIn } = useUser();
+  const { isLoading, error, selectedDatabaseId } = useDataContext();
   const queryClient = useQueryClient();
 
-  const selectedDatabase = userDatabases?.find(
-    (db) => db.id === selectedDatabaseId,
-  );
+  // Don't render anything if user is not signed in
+  if (!isSignedIn) {
+    return null;
+  }
 
   if (error) {
     return <div>Error: {error.message}</div>;
   }
-  if (isLoading || !userDatabases) {
+  if (isLoading) {
     return <Skeleton className="h-10 w-full" />;
   }
 
-  const handleSelect = async (db: DatabaseObjectResponse) => {
-    setOpen(false);
+  const handleChange = async (value: string) => {
     try {
       await Browser.storage.sync.set({
-        notionDatabaseId: db.id,
+        notionDatabaseId: value,
       });
       queryClient.invalidateQueries({ queryKey: ["selectedDatabaseId"] });
     } catch (error) {
@@ -122,50 +119,7 @@ function DatabaseSelect() {
     }
   };
 
-  return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button variant="outline" className="w-full justify-start">
-          {selectedDatabase ? (
-            <>
-              {selectedDatabase.icon?.type === "emoji" && (
-                <span className="mr-2">{selectedDatabase.icon.emoji}</span>
-              )}
-              {selectedDatabase.title[0]?.plain_text}
-            </>
-          ) : (
-            <span className="text-muted-foreground">
-              Select a database {userDatabases.length}
-            </span>
-          )}
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-72 p-0">
-        <div className="flex flex-col">
-          {userDatabases.map((database) => {
-            return (
-              <Button
-                key={database.id}
-                variant="ghost"
-                className="w-full justify-start px-4 py-2"
-                onClick={() => handleSelect(database)}
-              >
-                {database.icon?.type === "emoji" && (
-                  <span className="mr-2">{database.icon.emoji}</span>
-                )}
-                <span className="flex-1 text-left">
-                  {database.title[0]?.plain_text}
-                </span>
-                {selectedDatabase?.id === database.id && (
-                  <Check className="text-primary ml-2 h-4 w-4" />
-                )}
-              </Button>
-            );
-          })}
-        </div>
-      </PopoverContent>
-    </Popover>
-  );
+  return <DatabaseSelect value={selectedDatabaseId} onChange={handleChange} />;
 }
 
 export const RootLayout = () => {
@@ -184,11 +138,9 @@ export const RootLayout = () => {
           <div className="p-2">
             <UpdateNotification />
           </div>
-          <SignedIn>
-            <div className="p-2">
-              <DatabaseSelect />
-            </div>
-          </SignedIn>
+          <div className="p-2">
+            <DatabaseSelectWrapper />
+          </div>
           <main>
             <Outlet />
           </main>

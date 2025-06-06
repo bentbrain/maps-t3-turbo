@@ -8,6 +8,7 @@ export const env = createEnv({
     NEXT_PRIVATE_UNRESTRICTED_MAPS_KEY: z.string().min(1),
     CLERK_SECRET_KEY: z.string().min(1),
     CHROME_EXECUTABLE_PATH: z.string().optional(),
+    GITHUB_PAT: z.string().min(1),
   },
   client: {
     NEXT_PUBLIC_NOTION_TOKEN: z.string().min(1),
@@ -43,6 +44,7 @@ export const env = createEnv({
     NEXT_PUBLIC_POSTHOG_HOST: process.env.NEXT_PUBLIC_POSTHOG_HOST,
     NEXT_PUBLIC_VERCEL_ENVIRONMENT: process.env.NEXT_PUBLIC_VERCEL_ENVIRONMENT,
     CHROME_EXECUTABLE_PATH: process.env.CHROME_EXECUTABLE_PATH,
+    GITHUB_PAT: process.env.GITHUB_PAT,
   },
   // For Next.js >= 13.4.4, you only need to destructure client variables:
   // experimental__runtimeEnv: {

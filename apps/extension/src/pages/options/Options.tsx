@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
+import { trpcClient } from "@/utils/api";
+import { ClerkProvider, SignedIn } from "@clerk/chrome-extension";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Check, Database, LoaderCircle } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { Check, LoaderCircle } from "lucide-react";
 import { useForm } from "react-hook-form";
 import Browser from "webextension-polyfill";
 import * as z from "zod";
@@ -22,20 +25,56 @@ import {
   FormLabel,
   FormMessage,
 } from "@acme/ui/form";
-import { Input } from "@acme/ui/input";
+
+import { DatabaseSelect } from "../../components/DatabaseSelect";
+
+const PUBLISHABLE_KEY = import.meta.env.VITE_PUBLISHABLE_KEY;
+const SYNC_HOST = import.meta.env.VITE_PUBLIC_CLERK_SYNC_HOST;
+
+if (!PUBLISHABLE_KEY) {
+  throw new Error(
+    "Please add the VITE_PUBLISHABLE_KEY to the .env.development file",
+  );
+}
+
+if (!SYNC_HOST) {
+  throw new Error(
+    "Please add the VITE_CLERK_SYNC_HOST to the .env.development file",
+  );
+}
 
 interface StorageData {
   notionDatabaseId?: string;
 }
 
 const formSchema = z.object({
-  databaseId: z.string().uuid(),
+  databaseId: z.string().min(1, "Please select a database"),
 });
 
 type FormData = z.infer<typeof formSchema>;
 
-export default function Options() {
+async function fetchUserDatabases() {
+  const data = await trpcClient.user.getUserDatabasesFromNotion.query();
+
+  await Browser.storage.local.set({
+    userDatabases: data,
+    lastFetched: Date.now(),
+  });
+
+  return data;
+}
+
+async function getSelectedDatabaseId() {
+  const data = (await Browser.storage.sync.get([
+    "notionDatabaseId",
+  ])) as StorageData;
+  return data.notionDatabaseId;
+}
+
+function OptionsContent() {
   const [isSuccess, setIsSuccess] = useState(false);
+  const queryClient = useQueryClient();
+
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -55,12 +94,9 @@ export default function Options() {
   useEffect(() => {
     // Load saved settings
     const loadSettings = async () => {
-      const data = (await Browser.storage.sync.get([
-        "notionDatabaseId",
-      ])) as StorageData;
-
-      if (data.notionDatabaseId) {
-        form.reset({ databaseId: data.notionDatabaseId });
+      const selectedId = await getSelectedDatabaseId();
+      if (selectedId) {
+        form.reset({ databaseId: selectedId });
       }
     };
 
@@ -73,6 +109,9 @@ export default function Options() {
         notionDatabaseId: values.databaseId,
       });
 
+      // Invalidate queries to refresh the data
+      queryClient.invalidateQueries({ queryKey: ["selectedDatabaseId"] });
+
       setIsSuccess(true);
       form.reset({ databaseId: values.databaseId });
     } catch (error) {
@@ -81,10 +120,15 @@ export default function Options() {
   }
 
   return (
-    <div className="p-0 pb-4">
+    <div className="p-6 pb-4">
       <div className="container mx-auto max-w-2xl space-y-8">
-        <Card className="border-none p-0">
+        <Card>
           <CardHeader>
+            <img
+              src="/icon-32.png"
+              alt="Notion Maps Logo"
+              className="mb-1 h-8 w-8"
+            />
             <CardTitle className="text-2xl">Notion Maps Settings</CardTitle>
           </CardHeader>
 
@@ -96,26 +140,16 @@ export default function Options() {
                   name="databaseId"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="flex items-center gap-2">
-                        <Database className="h-4 w-4" />
-                        Notion Database ID
-                      </FormLabel>
+                      <FormLabel>Notion Database</FormLabel>
                       <FormControl>
-                        <Input
-                          placeholder="Enter your Notion database ID"
-                          {...field}
+                        <DatabaseSelect
+                          value={field.value}
+                          onChange={field.onChange}
+                          disabled={isSubmitting}
                         />
                       </FormControl>
                       <FormDescription>
-                        The ID of the database where locations will be saved.{" "}
-                        <a
-                          href="https://developers.notion.com/reference/retrieve-a-database#:~:text=To%20find%20a%20database%20ID%2C%20navigate%20to%20the%20database%20URL%20in%20your%20Notion%20workspace.%20The%20ID%20is%20the%20string%20of%20characters%20in%20the%20URL%20that%20is%20between%20the%20slash%20following%20the%20workspace%20name%20(if%20applicable)%20and%20the%20question%20mark.%20The%20ID%20is%20a%2032%20characters%20alphanumeric%20string."
-                          target="_blank"
-                          className="underline"
-                          rel="noopener noreferrer"
-                        >
-                          Click here for more information.
-                        </a>
+                        Select the database where locations will be saved.
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -149,5 +183,15 @@ export default function Options() {
         </Card>
       </div>
     </div>
+  );
+}
+
+export default function Options() {
+  return (
+    <ClerkProvider publishableKey={PUBLISHABLE_KEY} syncHost={SYNC_HOST}>
+      <SignedIn>
+        <OptionsContent />
+      </SignedIn>
+    </ClerkProvider>
   );
 }

@@ -37,6 +37,7 @@
     "posthog-node": "^4.17.2",
     "react": "catalog:react19",
     "react-dom": "catalog:react19",
+    "react-markdown": "^10.1.0",
     "react-notion-x": "^7.3.0",
     "superjson": "2.2.2",
     "zod": "catalog:",

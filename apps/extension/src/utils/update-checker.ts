@@ -1,14 +1,6 @@
 import Browser from "webextension-polyfill";
 
-interface GitHubRelease {
-  tag_name: string;
-  name: string;
-  published_at: string;
-  html_url: string;
-  body: string;
-  prerelease: boolean;
-  draft: boolean;
-}
+import { trpcClient } from "./api";
 
 export interface UpdateInfo {
   hasUpdate: boolean;
@@ -25,7 +17,6 @@ interface StoredUpdateInfo {
   updateInfo?: UpdateInfo;
 }
 
-const GITHUB_REPO = "bentbrain/maps-t3-turbo"; // Update this with your actual repo
 const CHECK_INTERVAL = 4 * 60 * 60 * 1000; // 4 hours in milliseconds
 const STORAGE_KEY = "extensionUpdateInfo";
 
@@ -51,31 +42,24 @@ function isVersionNewer(current: string, latest: string): boolean {
   return false;
 }
 
-// Fetch latest release from GitHub API
-async function fetchLatestRelease(): Promise<GitHubRelease | null> {
+// Fetch latest extension release via TRPC
+async function fetchLatestExtensionRelease() {
   try {
-    const response = await fetch(
-      `https://api.github.com/repos/${GITHUB_REPO}/releases`,
-    );
+    const release = await trpcClient.releases.getLatestRelease.query();
 
-    if (!response.ok) {
-      console.warn("Failed to fetch releases:", response.status);
+    if (!release) {
       return null;
     }
 
-    const releases: GitHubRelease[] = await response.json();
-
-    // Find the latest extension release (tagged with extension-v)
-    const extensionRelease = releases.find(
-      (release) =>
-        !release.draft &&
-        !release.prerelease &&
-        release.tag_name.startsWith("extension-v"),
-    );
-
-    return extensionRelease || null;
+    return {
+      tagName: release.tagName,
+      name: release.name || "",
+      publishedAt: release.publishedAt || "",
+      htmlUrl: release.htmlUrl,
+      body: release.body || "",
+    };
   } catch (error) {
-    console.warn("Error fetching latest release:", error);
+    console.warn("Error fetching latest extension release:", error);
     return null;
   }
 }
@@ -83,23 +67,23 @@ async function fetchLatestRelease(): Promise<GitHubRelease | null> {
 // Check for updates
 export async function checkForUpdates(): Promise<UpdateInfo | null> {
   const currentVersion = getCurrentVersion();
-  const latestRelease = await fetchLatestRelease();
+  const latestRelease = await fetchLatestExtensionRelease();
 
   if (!latestRelease) {
     return null;
   }
 
   // Extract version from tag (e.g., "extension-v1.4.1" -> "1.4.1")
-  const latestVersion = latestRelease.tag_name.replace("extension-v", "");
+  const latestVersion = latestRelease.tagName.replace("extension-v", "");
   const hasUpdate = isVersionNewer(currentVersion, latestVersion);
 
   const updateInfo: UpdateInfo = {
     hasUpdate,
     latestVersion,
     currentVersion,
-    releaseUrl: latestRelease.html_url,
+    releaseUrl: latestRelease.htmlUrl,
     releaseNotes: latestRelease.body,
-    publishedAt: latestRelease.published_at,
+    publishedAt: latestRelease.publishedAt,
   };
 
   // Store the update info
@@ -118,7 +102,6 @@ export async function getStoredUpdateInfo(): Promise<StoredUpdateInfo | null> {
   const result = await Browser.storage.local.get(STORAGE_KEY);
   const stored = result[STORAGE_KEY];
 
-  // Ensure we have a valid StoredUpdateInfo object
   if (
     !stored ||
     typeof stored !== "object" ||
@@ -140,14 +123,14 @@ export async function shouldShowUpdateNotification(): Promise<UpdateInfo | null>
 
   if (shouldFetch) {
     const updateInfo = await checkForUpdates();
-    if (!updateInfo) return null;
+    if (!updateInfo?.hasUpdate) return null;
 
     // Don't show if user dismissed this version
     if (stored?.dismissedVersion === updateInfo.latestVersion) {
       return null;
     }
 
-    return updateInfo.hasUpdate ? updateInfo : null;
+    return updateInfo;
   }
 
   // Use stored data
