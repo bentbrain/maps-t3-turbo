@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.2.0](https://github.com/bentbrain/maps-t3-turbo/compare/extension-v1.1.4...extension-v1.2.0) (2025-06-07)
+
+
+### Features
+
+* added landing page, other features ([475b246](https://github.com/bentbrain/maps-t3-turbo/commit/475b246c41e4282b920029a48ce3a2f37e9f639e))
+* updated commands in searchbar ([85de387](https://github.com/bentbrain/maps-t3-turbo/commit/85de38718a1427f94568a2752fb23181343903b5))
+
+
+### Bug Fixes
+
+* **extension:** various bug fixes ([f31d524](https://github.com/bentbrain/maps-t3-turbo/commit/f31d524bd9b79f025681eea181b714c622dcf2da))
+* **extension:** various bug fixes ([a4d9963](https://github.com/bentbrain/maps-t3-turbo/commit/a4d99635d924994ac88c4b7d417ff4c15bff0791))
+
 ## [1.1.4](https://github.com/bentbrain/maps-t3-turbo/compare/extension-v1.1.3...extension-v1.1.4) (2025-06-05)
 
 
