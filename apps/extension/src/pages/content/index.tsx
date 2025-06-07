@@ -27,6 +27,10 @@ function insertExtensionDetectionDiv(): void {
       div.style.position = "absolute";
       div.style.top = "-9999px";
 
+      // Add version number as data attribute
+      const manifest = Browser.runtime.getManifest();
+      div.setAttribute("data-version", manifest.version);
+
       // Insert at the beginning of body or head if body not available yet
       const target = document.body || document.head || document.documentElement;
       target.appendChild(div);

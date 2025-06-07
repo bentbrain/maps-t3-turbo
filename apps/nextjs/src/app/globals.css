@@ -121,7 +121,3 @@
     @apply bg-background text-foreground;
   }
 }
-
-body:has(#ExtensionInstalled) .install-extension-command {
-  display: none;
-}

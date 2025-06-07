@@ -4,13 +4,14 @@ import type { Location } from "@/lib/get-initial-data";
 import type { FuseResultMatch } from "fuse.js";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { redirect } from "next/navigation";
+import { redirect, useRouter } from "next/navigation";
 import { getNotionUrl } from "@/lib/get-initial-data";
 import { useMapStore } from "@/lib/map-store";
 import { useSidebarStore } from "@/lib/sidebar-store";
+import { useExtensionStatus } from "@/lib/use-extension-status";
 import { useTRPC } from "@/trpc/react";
 import { useUser } from "@clerk/nextjs";
-import { Chrome, Notion } from "@ridemountainpig/svgl-react";
+import { BuyMeACoffee, Chrome, Notion } from "@ridemountainpig/svgl-react";
 import { useQuery } from "@tanstack/react-query";
 import Fuse from "fuse.js";
 import {
@@ -206,6 +207,7 @@ function SearchBar({
                 selectedDatabaseId={selectedDatabaseId}
               />
             )}
+
             <SignUpCommand />
             <InstallExtensionCommand />
             <SidebarToggleCommand setOpen={setOpen} />
@@ -234,6 +236,7 @@ function SearchBar({
                 />
               </Link>
             </CommandItem>
+            <BuyMeACoffeeCommand />
           </CommandGroup>
           <CommandGroup heading="Locations">
             {searchResults.map(({ item: location, matches }) => (
@@ -321,9 +324,61 @@ const SignUpCommand = () => {
   );
 };
 
-const InstallExtensionCommand = () => {
+const BuyMeACoffeeCommand = () => {
+  const handleBuyMeACoffee = () => {
+    window.open("https://www.buymeacoffee.com/notion.locations", "_blank");
+  };
+
   return (
-    <CommandItem className="install-extension-command">
+    <CommandItem onSelect={handleBuyMeACoffee}>
+      <div className="flex w-full items-center justify-between gap-2">
+        <span className="flex items-center gap-2 font-medium">
+          <BuyMeACoffee className="h-4 w-4" /> Buy me a coffee
+        </span>
+        <CornerDownLeft
+          width={8}
+          height={8}
+          className="text-muted-foreground size-3!"
+        />
+      </div>
+    </CommandItem>
+  );
+};
+
+const InstallExtensionCommand = () => {
+  "use memo";
+  const { isInstalled, isOutOfDate } = useExtensionStatus();
+  const router = useRouter();
+  const handleInstall = () => {
+    router.push("/#download");
+  };
+
+  if (isOutOfDate) {
+    return (
+      <CommandItem
+        className="install-extension-command"
+        onSelect={handleInstall}
+      >
+        <div className="flex w-full items-center justify-between gap-2">
+          <span className="flex items-center gap-2 font-medium">
+            <Chrome className="h-4 w-4" /> Update extension
+          </span>
+          <CornerDownLeft
+            width={8}
+            height={8}
+            className="text-muted-foreground size-3!"
+          />
+        </div>
+      </CommandItem>
+    );
+  }
+
+  if (isInstalled) {
+    return null;
+  }
+
+  return (
+    <CommandItem className="install-extension-command" onSelect={handleInstall}>
       <div className="flex w-full items-center justify-between gap-2">
         <span className="flex items-center gap-2 font-medium">
           <Chrome className="h-4 w-4" /> Install extension

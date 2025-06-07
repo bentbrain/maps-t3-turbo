@@ -1,17 +1,12 @@
+import { Suspense } from "react";
+import Image from "next/image";
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { SignInButton } from "@clerk/nextjs";
-import { currentUser } from "@clerk/nextjs/server";
-import { BuyMeACoffee, Chrome } from "@ridemountainpig/svgl-react";
-import {
-  CheckCircle,
-  Download,
-  Globe,
-  Heart,
-  MapPin,
-  Shield,
-  Zap,
-} from "lucide-react";
+import { DatabaseList } from "@/components/database-list";
+import { caller } from "@/trpc/server";
+import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs";
+import { auth } from "@clerk/nextjs/server";
+import { BuyMeACoffee, Chrome, GitHubLight } from "@ridemountainpig/svgl-react";
+import { CheckCircle, Globe, MapPin, Shield, Wrench, Zap } from "lucide-react";
 
 import { Badge } from "@acme/ui/badge";
 import { Button } from "@acme/ui/button";
@@ -22,6 +17,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@acme/ui/card";
+
+import { DownloadButton } from "./releases/_components/download-button";
 
 const features = [
   {
@@ -83,76 +80,96 @@ const features = [
   },
 ];
 
-export default async function Home() {
-  const user = await currentUser();
-  if (user) {
-    redirect(`/${user.id}`);
-  }
-
+export default function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-purple-50">
-      {/* Navigation */}
-      <nav className="container mx-auto flex items-center justify-between px-4 py-6">
-        <div className="flex items-center space-x-2">
-          <MapPin className="h-8 w-8" />
-          <span className="text-2xl font-bold text-gray-900">
+      <nav className="grid px-8 py-3 sm:grid-cols-2">
+        <div className="flex items-center justify-center gap-2 sm:justify-start">
+          <Image
+            src="/logo.png"
+            alt="Notion Locations"
+            width={23}
+            height={23}
+          />
+          <span className="text-lg font-bold text-gray-900">
             Notion Locations
           </span>
         </div>
-        <div className="flex items-center space-x-4">
+        <div className="hidden items-center justify-end gap-1 sm:flex">
+          <Button variant="ghost" asChild>
+            <Link
+              target="_blank"
+              href="https://github.com/bentbrain/maps-t3-turbo"
+            >
+              <GitHubLight className="h-5 w-5" /> GitHub
+            </Link>
+          </Button>
           <Button variant="ghost" asChild>
             <Link href="#features">Features</Link>
           </Button>
           <Button variant="ghost" asChild>
             <Link href="#download">Download</Link>
           </Button>
-          <Button variant="outline" asChild>
-            <Link href="/sign-in">Sign In</Link>
-          </Button>
+          <SignedOut>
+            <Button variant="outline" asChild>
+              <Link href="/sign-in">Create an account</Link>
+            </Button>
+          </SignedOut>
+          <SignedIn>
+            <UserButton />
+          </SignedIn>
         </div>
       </nav>
 
       {/* Hero Section */}
       <section className="container mx-auto px-4 py-20 text-center">
         <div className="mx-auto max-w-4xl">
-          <Badge variant="secondary" className="mb-4">
-            <Zap className="mr-1 h-4 w-4" />
-            Free & Open Source
-          </Badge>
+          <div className="flex justify-center gap-2">
+            <Badge variant="secondary" className="mb-4 font-mono">
+              <Zap className="mr-1 h-4 w-4" />
+              free & open source
+            </Badge>
+            <Badge variant="secondary" className="mb-4 font-mono">
+              <Wrench className="mr-1 h-4 w-4" />
+              work in progress
+            </Badge>
+          </div>
           <h1 className="mb-6 text-4xl leading-none font-extrabold text-balance text-gray-900 md:text-6xl">
             Save Google Maps locations
             <span className=""> to Notion.</span>
           </h1>
-          <p className="mx-auto mb-8 max-w-2xl text-lg text-gray-600 md:text-xl">
-            <SignInButton>
-              <button className="cursor-pointer underline">Sign in</button>
-            </SignInButton>{" "}
-            with <span className="font-bold">Notion</span>. Download the{" "}
-            <span className="font-bold">extension</span>. Save locations for{" "}
-            <span className="font-bold">free</span>.
-          </p>
-          <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
-            <Button size="lg" asChild>
-              <Link
-                href="/demo/tokyo"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <MapPin className="h-5 w-5" />
-                Try the demo
-              </Link>
-            </Button>
-            <Button size="lg" variant="outline" asChild>
-              <Link
-                href="https://buymeacoffee.com/bentbrain"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <BuyMeACoffee className="h-5 w-5" />
-                Buy me a coffee
-              </Link>
-            </Button>
-          </div>
+          <SignedIn>
+            <Suspense fallback={<div>Loading...</div>}>
+              <div className="pt-4 text-left">
+                <SignedInParts />
+              </div>
+            </Suspense>
+          </SignedIn>
+          <SignedOut>
+            <p className="mx-auto mb-8 max-w-2xl text-lg text-balance text-gray-600 md:text-xl">
+              <SignInButton>
+                <button className="cursor-pointer underline">Sign in</button>
+              </SignInButton>{" "}
+              with <span className="font-medium">Notion</span>.{" "}
+              <a className="underline" href="#download">
+                Download
+              </a>{" "}
+              the <span className="font-medium">extension</span>. Save unlimited
+              locations for <span className="font-medium">free</span>.
+            </p>
+            <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
+              <Button size="lg" asChild>
+                <Link
+                  href="/demo/tokyo"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <MapPin className="h-5 w-5" />
+                  Try the demo
+                </Link>
+              </Button>
+            </div>
+          </SignedOut>
         </div>
       </section>
 
@@ -178,7 +195,7 @@ export default async function Home() {
       </section>
 
       {/* Get Started Section */}
-      <section id="get-started" className="bg-gray-50 py-20">
+      <section id="download" className="bg-gray-50 py-20">
         <div className="container mx-auto px-4">
           <div className="mx-auto max-w-6xl">
             <div className="mb-16 text-center">
@@ -191,50 +208,42 @@ export default async function Home() {
               </p>
             </div>
 
-            <div className="grid gap-16 lg:grid-cols-2">
-              {/* Extension Download */}
-              <div className="text-center">
-                <div className="mb-6">
-                  <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-gray-100">
-                    <span className="text-lg font-bold">1</span>
+            <SignedOut>
+              <div className="grid gap-16 lg:grid-cols-2">
+                {/* Extension Download */}
+                <div className="text-center">
+                  <div className="mb-6">
+                    <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-gray-100">
+                      <span className="text-lg font-bold">1</span>
+                    </div>
+                    <h3 className="mb-2 text-xl font-semibold text-gray-900">
+                      Install extension
+                    </h3>
+                    <p className="mb-6 text-gray-600">
+                      Download and install the Chrome extension
+                    </p>
                   </div>
-                  <h3 className="mb-2 text-xl font-semibold text-gray-900">
-                    Install Extension
-                  </h3>
-                  <p className="mb-6 text-gray-600">
-                    Download and install the Chrome extension
-                  </p>
+                  <DownloadButton size="lg" />
                 </div>
-                <Button size="lg" asChild>
-                  <Link
-                    href="https://github.com/bentbrain/maps-t3-turbo/releases/latest"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <Download className="mr-2 h-5 w-5" />
-                    Download Extension
-                  </Link>
-                </Button>
-              </div>
-
-              {/* Account Setup */}
-              <div className="text-center">
-                <div className="mb-6">
-                  <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-gray-100">
-                    <span className="text-lg font-bold">2</span>
+                {/* Account Setup */}
+                <div className="text-center">
+                  <div className="mb-6">
+                    <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-gray-100">
+                      <span className="text-lg font-bold">2</span>
+                    </div>
+                    <h3 className="mb-2 text-xl font-semibold text-gray-900">
+                      Create an account
+                    </h3>
+                    <p className="text-gray-600">
+                      Sign up to get access to your personal dashboard
+                    </p>
                   </div>
-                  <h3 className="mb-2 text-xl font-semibold text-gray-900">
-                    Create Your Account
-                  </h3>
-                  <p className="text-gray-600">
-                    Sign up to get access to your personal dashboard
-                  </p>
+                  <Button className="cursor-pointer" size="lg" asChild>
+                    <SignInButton> Create an account </SignInButton>
+                  </Button>
                 </div>
-                <Button className="cursor-pointer" size="lg" asChild>
-                  <SignInButton />
-                </Button>
               </div>
-            </div>
+            </SignedOut>
 
             {/* Installation Steps */}
             <div className="mt-16">
@@ -258,6 +267,13 @@ export default async function Home() {
                   <p className="text-sm text-gray-600">
                     Download the extension zip file from the latest release
                   </p>
+                  <SignedIn>
+                    <DownloadButton
+                      variant="outline"
+                      className="mt-4 w-full"
+                      size="sm"
+                    />
+                  </SignedIn>
                 </div>
 
                 <div className="rounded-lg border bg-white p-4 shadow-sm">
@@ -338,19 +354,19 @@ export default async function Home() {
           <h2 className="mb-4 text-3xl font-bold text-gray-900">
             Support the project
           </h2>
-          <p className="mb-8 text-lg text-gray-600">
+          <p className="mb-8 text-lg text-balance text-gray-600">
             Notion Locations is completely free and open source. If you find it
             useful, consider supporting its development.
           </p>
           <div className="flex flex-col justify-center gap-4 sm:flex-row">
             <Button size="lg" variant="outline" asChild>
               <Link
-                href="https://buymeacoffee.com/bentbrain"
+                href="https://buymeacoffee.com/notion.locations"
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                <Heart className="mr-2 h-5 w-5 text-red-500" />
-                Buy me a coffee ☕
+                <BuyMeACoffee className="h-5 w-5" />
+                Buy me a coffee
               </Link>
             </Button>
             <Button size="lg" variant="outline" asChild>
@@ -359,7 +375,8 @@ export default async function Home() {
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                ⭐ Star on GitHub
+                <GitHubLight className="h-5 w-5" />
+                Star on GitHub
               </Link>
             </Button>
           </div>
@@ -367,73 +384,16 @@ export default async function Home() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 py-12 text-white">
-        <div className="container mx-auto px-4">
-          <div className="mx-auto grid max-w-6xl gap-8 md:grid-cols-4">
-            <div className="md:col-span-2">
-              <div className="mb-4 flex items-center space-x-2">
-                <MapPin className="h-6 w-6" />
-                <span className="text-xl font-bold">Notion Locations</span>
-              </div>
-              <p className="max-w-md text-gray-400">
-                Save Google Maps locations to Notion and visualize them on an
-                interactive map. Free, open source, and privacy-focused.
-              </p>
-            </div>
-            <div>
-              <h3 className="mb-4 font-semibold">Product</h3>
-              <ul className="space-y-2 text-gray-400">
-                <li>
-                  <Link href="#features" className="hover:text-white">
-                    Features
-                  </Link>
-                </li>
-                <li>
-                  <Link href="#download" className="hover:text-white">
-                    Download
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/privacy-policy" className="hover:text-white">
-                    Privacy Policy
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/terms-of-use" className="hover:text-white">
-                    Terms of Use
-                  </Link>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="mb-4 font-semibold">Support</h3>
-              <ul className="space-y-2 text-gray-400">
-                <li>
-                  <Link
-                    href="https://github.com/bentbrain/maps-t3-turbo"
-                    target="_blank"
-                    className="hover:text-white"
-                  >
-                    GitHub Issues
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="https://buymeacoffee.com/bentbrain"
-                    target="_blank"
-                    className="hover:text-white"
-                  >
-                    Donate
-                  </Link>
-                </li>
-              </ul>
-            </div>
-          </div>
-          <div className="mx-auto mt-8 max-w-6xl border-t border-gray-800 pt-8 text-center text-gray-400">
-            <p>
-              &copy; 2024 Notion Locations. Open source software released under
-              the MIT License.
-            </p>
+      <footer className="bg-muted py-8">
+        <div className="container mx-auto flex flex-col items-center gap-4 px-4">
+          <div className="text-muted-foreground flex gap-6 text-sm">
+            <Link className="hover:underline" href="/privacy-policy">
+              Privacy Policy
+            </Link>
+            <Link className="hover:underline" href="/terms-of-use">
+              Terms of Use
+            </Link>
+            <div>&copy; {new Date().getFullYear()} Notion Locations</div>
           </div>
         </div>
       </footer>
@@ -476,4 +436,14 @@ const Feature = ({
       </CardContent>
     </Card>
   );
+};
+
+const SignedInParts = async () => {
+  const { userId } = await auth();
+
+  if (!userId) return null;
+
+  const databases = await caller.user.getUserDatabasesFromNotion();
+
+  return <DatabaseList databases={databases} userId={userId} />;
 };
