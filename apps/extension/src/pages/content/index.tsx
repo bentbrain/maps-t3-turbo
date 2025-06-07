@@ -10,6 +10,33 @@ interface LocationData {
   city?: string;
 }
 
+// Function to insert extension detection div on target domains
+function insertExtensionDetectionDiv(): void {
+  const currentHost = window.location.hostname;
+  const isDevelopment = import.meta.env.MODE === "development";
+  const expectedHost = isDevelopment ? "localhost" : "www.notionlocations.com";
+  const isTargetDomain = currentHost === expectedHost;
+
+  if (isTargetDomain) {
+    // Check if div already exists to avoid duplicates
+    if (!document.getElementById("ExtensionInstalled")) {
+      const div = document.createElement("div");
+      div.id = "ExtensionInstalled";
+      div.style.display = "none";
+      div.style.visibility = "hidden";
+      div.style.position = "absolute";
+      div.style.top = "-9999px";
+
+      // Insert at the beginning of body or head if body not available yet
+      const target = document.body || document.head || document.documentElement;
+      target.appendChild(div);
+    }
+  }
+}
+
+// Insert the detection div when the script loads
+insertExtensionDetectionDiv();
+
 async function extractLocationData(): Promise<LocationData | null> {
   // Check if we're on Google Maps
   if (!window.location.href.includes("google.com/maps")) {

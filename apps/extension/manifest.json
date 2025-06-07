@@ -22,7 +22,10 @@
     "https://api.notion.com/*",
     "https://api.github.com/*",
     "$VITE_PUBLIC_CLERK_SYNC_HOST/*",
-    "$VITE_CLERK_FRONTEND_API/*"
+    "$VITE_CLERK_FRONTEND_API/*",
+    "https://www.notionlocations.com/*",
+    "http://localhost:*/*",
+    "https://localhost:*/*"
   ],
   "background": {
     "service_worker": "src/pages/background/index.ts",
@@ -30,7 +33,12 @@
   },
   "content_scripts": [
     {
-      "matches": ["*://*.google.com/maps/*"],
+      "matches": [
+        "*://*.google.com/maps/*",
+        "https://www.notionlocations.com/*",
+        "http://localhost:*/*",
+        "https://localhost:*/*"
+      ],
       "js": ["src/pages/content/index.tsx"],
       "css": ["contentStyle.css"]
     }
@@ -38,7 +46,12 @@
   "web_accessible_resources": [
     {
       "resources": ["contentStyle.css", "icon-128.png", "icon-32.png"],
-      "matches": ["*://*.google.com/*"]
+      "matches": [
+        "*://*.google.com/*",
+        "https://www.notionlocations.com/*",
+        "http://localhost:*/*",
+        "https://localhost:*/*"
+      ]
     }
   ]
 }

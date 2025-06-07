@@ -1,11 +1,12 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { Octokit } from "@octokit/rest";
+
 import { env } from "@acme/env/env";
 
 const REPO_OWNER = "bentbrain";
 const REPO_NAME = "maps-t3-turbo";
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const github = new Octokit({
       auth: env.GITHUB_PAT,
@@ -18,16 +19,17 @@ export async function GET(request: NextRequest) {
     });
 
     // Find the extension zip file in the release assets
-    const extensionAsset = release.assets.find(asset => 
-      asset.name.includes("extension") || 
-      asset.name.includes("chrome") ||
-      asset.content_type === "application/zip"
+    const extensionAsset = release.assets.find(
+      (asset) =>
+        asset.name.includes("extension") ||
+        asset.name.includes("chrome") ||
+        asset.content_type === "application/zip",
     );
 
     if (!extensionAsset) {
       return NextResponse.json(
         { error: "No extension asset found in latest release" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -45,10 +47,10 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(assetData.url);
   } catch (error) {
     console.error("Error downloading latest release:", error);
-    
+
     // Fallback to GitHub releases page
     return NextResponse.redirect(
-      `https://github.com/${REPO_OWNER}/${REPO_NAME}/releases/latest`
+      `https://github.com/${REPO_OWNER}/${REPO_NAME}/releases/latest`,
     );
   }
 }

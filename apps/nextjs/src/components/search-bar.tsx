@@ -9,7 +9,8 @@ import { getNotionUrl } from "@/lib/get-initial-data";
 import { useMapStore } from "@/lib/map-store";
 import { useSidebarStore } from "@/lib/sidebar-store";
 import { useTRPC } from "@/trpc/react";
-import { Notion } from "@ridemountainpig/svgl-react";
+import { useUser } from "@clerk/nextjs";
+import { Chrome, Notion } from "@ridemountainpig/svgl-react";
 import { useQuery } from "@tanstack/react-query";
 import Fuse from "fuse.js";
 import {
@@ -25,6 +26,7 @@ import {
   Repeat,
   Search,
   Share,
+  User,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -53,10 +55,12 @@ function SearchBar({
   locations,
   userId,
   selectedDatabaseId,
+  showcase = false,
 }: {
   locations: Location[];
   selectedDatabaseId: string;
   userId: string;
+  showcase?: boolean;
 }) {
   "use memo";
   const trpc = useTRPC();
@@ -66,8 +70,10 @@ function SearchBar({
   const { focusFromSidebar } = useMapStore();
   const inputRef = useRef<HTMLInputElement>(null);
   const commandListRef = useRef<HTMLDivElement>(null);
+
   const { data: databases } = useQuery({
     ...trpc.user.getUserDatabasesFromNotion.queryOptions(),
+    enabled: !showcase,
   });
 
   useEffect(() => {
@@ -193,11 +199,15 @@ function SearchBar({
         >
           <CommandEmpty>No results found.</CommandEmpty>
           <CommandGroup heading="Commands">
-            <DatabaseCommand
-              databases={databases}
-              userId={userId}
-              selectedDatabaseId={selectedDatabaseId}
-            />
+            {showcase ? null : (
+              <DatabaseCommand
+                databases={databases}
+                userId={userId}
+                selectedDatabaseId={selectedDatabaseId}
+              />
+            )}
+            <SignUpCommand />
+            <InstallExtensionCommand />
             <SidebarToggleCommand setOpen={setOpen} />
             <ClearFiltersCommand setOpen={setOpen} />
             <CurrentLocationCommand setOpen={setOpen} />
@@ -283,6 +293,50 @@ function SearchBar({
 }
 
 export default SearchBar;
+
+const SignUpCommand = () => {
+  const { isSignedIn, isLoaded } = useUser();
+
+  if (isSignedIn || !isLoaded) {
+    return null;
+  }
+
+  return (
+    <CommandItem
+      onSelect={() => {
+        redirect("/sign-in");
+      }}
+    >
+      <div className="flex w-full items-center justify-between gap-2">
+        <span className="flex items-center gap-2 font-medium">
+          <User className="h-4 w-4" /> Create an account
+        </span>
+        <CornerDownLeft
+          width={8}
+          height={8}
+          className="text-muted-foreground size-3!"
+        />
+      </div>
+    </CommandItem>
+  );
+};
+
+const InstallExtensionCommand = () => {
+  return (
+    <CommandItem className="install-extension-command">
+      <div className="flex w-full items-center justify-between gap-2">
+        <span className="flex items-center gap-2 font-medium">
+          <Chrome className="h-4 w-4" /> Install extension
+        </span>
+        <CornerDownLeft
+          width={8}
+          height={8}
+          className="text-muted-foreground size-3!"
+        />
+      </div>
+    </CommandItem>
+  );
+};
 
 const SidebarToggleCommand = ({
   setOpen,

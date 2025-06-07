@@ -248,4 +248,20 @@ export const userRouter = {
 
       return database.properties;
     }),
+  getDatabaseTitle: publicProcedure
+    .input(z.object({ databaseId: z.string(), userId: z.string() }))
+    .query(async ({ input }) => {
+      const { databaseId, userId } = input;
+      const notion = await getAuthenticatedNotionClient(userId);
+
+      const database = await notion.databases.retrieve({
+        database_id: databaseId,
+      });
+
+      if ("title" in database) {
+        return database.title[0]?.plain_text ?? null;
+      }
+
+      return null;
+    }),
 } satisfies TRPCRouterRecord;
