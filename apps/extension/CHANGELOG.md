@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.3.1](https://github.com/bentbrain/maps-t3-turbo/compare/extension-v1.3.0...extension-v1.3.1) (2025-06-07)
+
+
+### Code Refactoring
+
+* **extension:** updated message for available update ([484c67c](https://github.com/bentbrain/maps-t3-turbo/commit/484c67c28af6d797cdceb57f25ea9ac2ce34621e))
+* **extension:** updated message for available update ([33cc994](https://github.com/bentbrain/maps-t3-turbo/commit/33cc99474ee2fe48a702d77d30effcbfb46ea605))
+
 ## [1.3.0](https://github.com/bentbrain/maps-t3-turbo/compare/extension-v1.2.0...extension-v1.3.0) (2025-06-07)
 
 
