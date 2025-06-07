@@ -5,7 +5,7 @@ import { z } from "zod";
 
 import { env } from "@acme/env/env";
 
-import { protectedProcedure, publicProcedure } from "../trpc";
+import { publicProcedure } from "../trpc";
 
 // Initialize GitHub client with PAT authentication
 function getGitHubClient() {
@@ -36,12 +36,15 @@ export const releasesRouter = {
         publishedAt: release.published_at,
         draft: release.draft,
         prerelease: release.prerelease,
-        assets: release.assets.map((asset) => ({
-          id: asset.id,
-          name: asset.name,
-          size: asset.size,
-          contentType: asset.content_type,
-        })),
+        asset: release.assets
+          .map((asset) => ({
+            id: asset.id,
+            name: asset.name,
+            size: asset.size,
+            url: asset.browser_download_url,
+            contentType: asset.content_type,
+          }))
+          .find((asset) => asset.name.includes("extension")),
       };
     } catch (error) {
       console.error("Error fetching latest release:", error);
@@ -81,12 +84,15 @@ export const releasesRouter = {
           publishedAt: release.published_at,
           draft: release.draft,
           prerelease: release.prerelease,
-          assets: release.assets.map((asset) => ({
-            id: asset.id,
-            name: asset.name,
-            size: asset.size,
-            contentType: asset.content_type,
-          })),
+          extensionAsset: release.assets
+            .map((asset) => ({
+              id: asset.id,
+              name: asset.name,
+              url: asset.browser_download_url,
+              size: asset.size,
+              contentType: asset.content_type,
+            }))
+            .find((asset) => asset.name.includes("extension")),
         }));
       } catch (error) {
         console.error("Error fetching releases:", error);
@@ -97,7 +103,7 @@ export const releasesRouter = {
       }
     }),
 
-  generateDownloadUrl: protectedProcedure
+  generateDownloadUrl: publicProcedure
     .input(
       z.object({
         assetId: z.number(),

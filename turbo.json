@@ -52,6 +52,7 @@
     "CLERK_SECRET_KEY",
     "NODE_ENV",
     "CHROME_EXECUTABLE_PATH",
+    "ADMIN_NOTION_USER_ID",
     "GITHUB_PAT",
     "NEXT_PUBLIC_*"
   ],
