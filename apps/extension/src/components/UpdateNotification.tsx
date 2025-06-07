@@ -1,5 +1,14 @@
 import { useEffect, useState } from "react";
-import { Download, ExternalLink, X } from "lucide-react";
+import { DownloadIcon, X } from "lucide-react";
+
+import { Button } from "@acme/ui/button";
+import {
+  Card,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@acme/ui/card";
 
 import type { UpdateInfo } from "../utils/update-checker";
 import {
@@ -48,6 +57,14 @@ export function UpdateNotification({
     }
   };
 
+  const handleUpdate = () => {
+    if (updateInfo?.releaseUrl) {
+      chrome.tabs.create({
+        url: `${import.meta.env.VITE_WEBSITE_URL}#download`,
+      });
+    }
+  };
+
   const handleViewRelease = () => {
     if (updateInfo?.releaseUrl) {
       chrome.tabs.create({ url: updateInfo.releaseUrl });
@@ -59,44 +76,35 @@ export function UpdateNotification({
   }
 
   return (
-    <div
-      className={`mb-3 rounded-lg border border-blue-200 bg-blue-50 p-3 ${className}`}
-    >
-      <div className="flex items-start justify-between">
-        <div className="flex flex-1 items-start space-x-2">
-          <Download className="mt-0.5 h-4 w-4 flex-shrink-0 text-blue-500" />
-          <div className="min-w-0 flex-1">
-            <p className="text-sm font-medium text-blue-900">
-              Update Available
-            </p>
-            <p className="mt-1 text-xs text-blue-700">
-              Version {updateInfo.latestVersion} is now available
-            </p>
-            {updateInfo.releaseNotes && (
-              <p className="mt-1 line-clamp-2 text-xs text-blue-600">
-                {updateInfo.releaseNotes.split("\n")[0].replace(/^#+\s*/, "")}
-              </p>
-            )}
+    <Card className="gap-3 rounded-sm p-3 shadow-none">
+      <CardHeader className="p-0">
+        <CardTitle>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-sm">
+              <DownloadIcon className="h-4 w-4" /> Update available
+            </div>
+            <Button variant="ghost" size={"icon"} onClick={handleDismiss}>
+              <X className="h-3 w-3" />
+            </Button>
           </div>
-        </div>
-        <div className="ml-2 flex items-center space-x-1">
-          <button
-            onClick={handleViewRelease}
-            className="rounded p-1 text-blue-500 transition-colors hover:bg-blue-100 hover:text-blue-700"
-            title="View release"
-          >
-            <ExternalLink className="h-3 w-3" />
-          </button>
-          <button
-            onClick={handleDismiss}
-            disabled={isDismissing}
-            className="rounded p-1 text-blue-400 transition-colors hover:bg-blue-100 hover:text-blue-600 disabled:opacity-50"
-            title="Dismiss"
-          >
-            <X className="h-3 w-3" />
-          </button>
-        </div>
-      </div>
-    </div>
+        </CardTitle>
+        <CardDescription className="text-xs">
+          A new version of the extension is available.
+        </CardDescription>
+      </CardHeader>
+      <CardFooter className="grid grid-cols-2 gap-2 p-0">
+        <Button className="text-xs" size={"sm"} onClick={handleUpdate}>
+          Update
+        </Button>
+        <Button
+          className="text-xs"
+          size={"sm"}
+          variant="outline"
+          onClick={handleViewRelease}
+        >
+          View release
+        </Button>
+      </CardFooter>
+    </Card>
   );
 }

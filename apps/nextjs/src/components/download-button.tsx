@@ -29,7 +29,7 @@ export function DownloadButton({
     >
       <Link href={latestRelease.data?.asset?.url ?? ""}>
         <Download className="mr-2 h-4 w-4" />
-        Download latest
+        Download latest version
       </Link>
     </Button>
   );

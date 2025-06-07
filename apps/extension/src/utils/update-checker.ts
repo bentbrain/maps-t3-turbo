@@ -14,10 +14,12 @@ export interface UpdateInfo {
 interface StoredUpdateInfo {
   lastChecked: number;
   dismissedVersion?: string;
+  dismissedAt?: number; // Timestamp when dismissed
   updateInfo?: UpdateInfo;
 }
 
 const CHECK_INTERVAL = 4 * 60 * 60 * 1000; // 4 hours in milliseconds
+const DISMISS_DURATION = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
 const STORAGE_KEY = "extensionUpdateInfo";
 
 // Get current extension version from manifest
@@ -75,6 +77,7 @@ export async function checkForUpdates(): Promise<UpdateInfo | null> {
 
   // Extract version from tag (e.g., "extension-v1.4.1" -> "1.4.1")
   const latestVersion = latestRelease.tagName.replace("extension-v", "");
+
   const hasUpdate = isVersionNewer(currentVersion, latestVersion);
 
   const updateInfo: UpdateInfo = {
@@ -86,10 +89,14 @@ export async function checkForUpdates(): Promise<UpdateInfo | null> {
     publishedAt: latestRelease.publishedAt,
   };
 
-  // Store the update info
+  // Store the update info, preserving existing dismissal state
+  const existingStored = await getStoredUpdateInfo();
   const storedInfo: StoredUpdateInfo = {
     lastChecked: Date.now(),
     updateInfo,
+    // Preserve existing dismissal state
+    dismissedVersion: existingStored?.dismissedVersion,
+    dismissedAt: existingStored?.dismissedAt,
   };
 
   await Browser.storage.local.set({ [STORAGE_KEY]: storedInfo });
@@ -115,36 +122,41 @@ export async function getStoredUpdateInfo(): Promise<StoredUpdateInfo | null> {
 
 // Check if we should show the update notification
 export async function shouldShowUpdateNotification(): Promise<UpdateInfo | null> {
+  // First check if we have stored data and if it's been dismissed recently
   const stored = await getStoredUpdateInfo();
 
-  // Check if we need to fetch new data
+  // Check if we need to fetch new data (no stored data or data is old)
   const shouldFetch =
     !stored || Date.now() - stored.lastChecked > CHECK_INTERVAL;
 
+  let updateInfo: UpdateInfo | null;
+
   if (shouldFetch) {
-    const updateInfo = await checkForUpdates();
-    if (!updateInfo?.hasUpdate) return null;
-
-    // Don't show if user dismissed this version
-    if (stored?.dismissedVersion === updateInfo.latestVersion) {
-      return null;
-    }
-
-    return updateInfo;
+    updateInfo = await checkForUpdates();
+  } else {
+    updateInfo = stored.updateInfo || null;
   }
 
-  // Use stored data
-  if (!stored.updateInfo?.hasUpdate) return null;
-
-  // Don't show if user dismissed this version
-  if (stored.dismissedVersion === stored.updateInfo.latestVersion) {
+  if (!updateInfo?.hasUpdate) {
     return null;
   }
 
-  return stored.updateInfo;
+  // Check if user dismissed this version recently (within 24 hours)
+  const currentStored = shouldFetch ? await getStoredUpdateInfo() : stored;
+  if (
+    currentStored?.dismissedVersion === updateInfo.latestVersion &&
+    currentStored?.dismissedAt
+  ) {
+    const timeSinceDismiss = Date.now() - currentStored.dismissedAt;
+    if (timeSinceDismiss < DISMISS_DURATION) {
+      return null;
+    }
+  }
+
+  return updateInfo;
 }
 
-// Dismiss update notification for current version
+// Dismiss update notification for current version (24 hour cooldown)
 export async function dismissUpdateNotification(
   version: string,
 ): Promise<void> {
@@ -153,6 +165,7 @@ export async function dismissUpdateNotification(
     lastChecked: stored?.lastChecked || Date.now(),
     updateInfo: stored?.updateInfo,
     dismissedVersion: version,
+    dismissedAt: Date.now(), // Store when it was dismissed
   };
 
   await Browser.storage.local.set({ [STORAGE_KEY]: updatedInfo });
