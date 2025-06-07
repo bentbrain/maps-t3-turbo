@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { DatabaseList } from "@/components/database-list";
+import { DownloadButton } from "@/components/download-button";
 import { caller } from "@/trpc/server";
 import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs";
 import { auth } from "@clerk/nextjs/server";
@@ -17,8 +18,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@acme/ui/card";
-
-import { DownloadButton } from "./releases/_components/download-button";
 
 const features = [
   {
