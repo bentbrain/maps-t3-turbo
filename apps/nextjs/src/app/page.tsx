@@ -392,7 +392,7 @@ export default function Home() {
       {/* Footer */}
       <footer className="bg-muted py-8">
         <div className="container mx-auto flex flex-col items-center gap-4 px-4">
-          <div className="text-muted-foreground flex gap-6 text-sm">
+          <div className="text-muted-foreground flex flex-col gap-2 text-center text-sm sm:flex-row sm:gap-6">
             <Link className="hover:underline" href="/privacy-policy">
               Privacy Policy
             </Link>
