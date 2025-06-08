@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.4.1](https://github.com/bentbrain/maps-t3-turbo/compare/extension-v1.4.0...extension-v1.4.1) (2025-06-08)
+
+
+### Code Refactoring
+
+* updated branding to Maps & Locations ([800ab05](https://github.com/bentbrain/maps-t3-turbo/commit/800ab051187945ffa1a0fc666bb6d1cd8c11d6ff))
+* updated branding to Maps & Locations ([31dda9c](https://github.com/bentbrain/maps-t3-turbo/commit/31dda9ca63f5198385d647cc173d4c86b810bb4e))
+
 ## [1.4.0](https://github.com/bentbrain/maps-t3-turbo/compare/extension-v1.3.1...extension-v1.4.0) (2025-06-08)
 
 
