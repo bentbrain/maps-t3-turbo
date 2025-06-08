@@ -1,6 +1,5 @@
 import { Suspense } from "react";
 import { unstable_cache as cache } from "next/cache";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import SearchBar from "@/components/search-bar";
 import { AppSidebar } from "@/components/sidebar-app";
@@ -8,6 +7,7 @@ import { RightSidebarTrigger } from "@/components/sidebar-dynamic-wrapper";
 import { PageSidebar } from "@/components/sidebar-page";
 import { getInitialData } from "@/lib/get-initial-data";
 import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs";
+import { Notion } from "@ridemountainpig/svgl-react";
 import { z } from "zod";
 
 import { env } from "@acme/env/env";
@@ -68,11 +68,12 @@ export default async function ShowcaseLayout({
           </div>
           <div className="ml-auto flex w-full justify-end gap-2">
             <SignedOut>
-              <Button variant="outline" asChild>
-                <Link href="/">Home</Link>
-              </Button>
-              <Button className="cursor-pointer" asChild>
-                <SignInButton>Create an account</SignInButton>
+              <Button variant="outline" className="cursor-pointer" asChild>
+                <SignInButton>
+                  <span className="flex items-center gap-2">
+                    <Notion className="h-5 w-5" /> Sign in with Notion
+                  </span>
+                </SignInButton>
               </Button>
             </SignedOut>
             <SignedIn>

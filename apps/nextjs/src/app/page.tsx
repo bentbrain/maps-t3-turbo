@@ -6,7 +6,12 @@ import { DownloadButton } from "@/components/download-button";
 import { caller } from "@/trpc/server";
 import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs";
 import { auth } from "@clerk/nextjs/server";
-import { BuyMeACoffee, Chrome, GitHubLight } from "@ridemountainpig/svgl-react";
+import {
+  BuyMeACoffee,
+  Chrome,
+  GitHubLight,
+  Notion,
+} from "@ridemountainpig/svgl-react";
 import { CheckCircle, Globe, MapPin, Shield, Wrench, Zap } from "lucide-react";
 
 import { Badge } from "@acme/ui/badge";
@@ -111,7 +116,9 @@ export default function Home() {
           </Button>
           <SignedOut>
             <Button variant="outline" asChild>
-              <Link href="/sign-in">Create an account</Link>
+              <Link href="/sign-in">
+                <Notion className="h-5 w-5" /> Sign in with Notion
+              </Link>
             </Button>
           </SignedOut>
           <SignedIn>
@@ -172,6 +179,11 @@ export default function Home() {
                   Try the demo
                 </Link>
               </Button>
+              <Button size="lg" variant="outline" asChild>
+                <Link href="/sign-in">
+                  <Notion className="h-5 w-5" /> Sign in with Notion
+                </Link>
+              </Button>
             </div>
           </SignedOut>
         </div>
@@ -219,7 +231,7 @@ export default function Home() {
                 {/* Extension Download */}
                 <div className="text-center">
                   <div className="mb-6">
-                    <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-gray-100">
+                    <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-gray-800 text-white">
                       <span className="text-lg font-bold">1</span>
                     </div>
                     <h3 className="mb-2 text-xl font-semibold text-gray-900">
@@ -229,23 +241,32 @@ export default function Home() {
                       Download and install the Chrome extension
                     </p>
                   </div>
-                  <DownloadButton size="lg" />
+                  <DownloadButton variant="outline" size="lg" />
                 </div>
                 {/* Account Setup */}
                 <div className="text-center">
                   <div className="mb-6">
-                    <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-gray-100">
+                    <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-gray-800 text-white">
                       <span className="text-lg font-bold">2</span>
                     </div>
                     <h3 className="mb-2 text-xl font-semibold text-gray-900">
-                      Create an account
+                      Connect your Notion workspace
                     </h3>
                     <p className="text-gray-600">
                       Sign up to get access to your personal dashboard
                     </p>
                   </div>
-                  <Button className="cursor-pointer" size="lg" asChild>
-                    <SignInButton> Create an account </SignInButton>
+                  <Button
+                    variant="outline"
+                    className="cursor-pointer"
+                    size="lg"
+                    asChild
+                  >
+                    <SignInButton>
+                      <span className="flex items-center gap-2">
+                        <Notion className="h-5 w-5" /> Sign in with Notion
+                      </span>
+                    </SignInButton>
                   </Button>
                 </div>
               </div>
