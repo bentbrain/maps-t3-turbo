@@ -4,7 +4,7 @@ import Link from "next/link";
 import { DatabaseList } from "@/components/database-list";
 import { DownloadButton } from "@/components/download-button";
 import { caller } from "@/trpc/server";
-import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs";
+import { SignedIn, SignedOut, SignInButton } from "@clerk/nextjs";
 import { auth } from "@clerk/nextjs/server";
 import {
   BuyMeACoffee,
@@ -114,18 +114,6 @@ export default function Home() {
           <Button variant="ghost" asChild>
             <Link href="#download">Download</Link>
           </Button>
-          <SignedOut>
-            <Button variant="outline" asChild>
-              <SignInButton>
-                <span className="flex items-center gap-2">
-                  <Notion className="h-5 w-5" /> Sign in with Notion
-                </span>
-              </SignInButton>
-            </Button>
-          </SignedOut>
-          <SignedIn>
-            <UserButton />
-          </SignedIn>
         </div>
       </nav>
 
@@ -181,7 +169,12 @@ export default function Home() {
                   Try the demo
                 </Link>
               </Button>
-              <Button size="lg" variant="outline" asChild>
+              <Button
+                size="lg"
+                className="cursor-pointer"
+                variant="outline"
+                asChild
+              >
                 <SignInButton>
                   <span className="flex items-center gap-2">
                     <Notion className="h-5 w-5" /> Sign in with Notion
