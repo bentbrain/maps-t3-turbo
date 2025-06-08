@@ -1,6 +1,5 @@
 import { createHmac, timingSafeEqual } from "crypto";
 import { revalidateTag } from "next/cache";
-import { Client } from "@notionhq/client";
 
 import { env } from "@acme/env/env";
 
@@ -10,6 +9,7 @@ interface NotionWebhookBody {
   type?: string;
   entity?: {
     id?: string;
+    type?: string;
   };
   data?: {
     parent?: {
@@ -17,24 +17,37 @@ interface NotionWebhookBody {
       type?: string;
     };
     updated_properties?: string[];
+    updated_blocks?: { id: string; type: string }[];
+    page_id?: string; // For comment events
   };
   authors?: { id: string; type: string }[];
   [key: string]: string | number | boolean | object | undefined;
 }
 
-// Initialize Notion client
-const notion = new Client({
-  auth: env.NEXT_PUBLIC_NOTION_TOKEN,
-});
+// Events that require cache invalidation for map data
+const RELEVANT_EVENTS = [
+  // Page events in databases
+  "page.created",
+  "page.properties_updated",
+  "page.content_updated",
+  "page.moved",
+  "page.deleted",
+  "page.undeleted",
+  // Database events
+  "database.created",
+  "database.content_updated",
+  "database.moved",
+  "database.deleted",
+  "database.undeleted",
+  "database.schema_updated",
+];
 
-// Properties we want to check for
-const LOCATION_PROPERTIES = ["Latitude", "Longitude"];
-
-async function handleDatabaseEvent(
+function handlePageInDatabaseEvent(
   databaseId: string,
+  pageId: string,
   eventType: string,
   authors?: { id: string; type: string }[],
-): Promise<Response> {
+): Response {
   // Ignore bot-authored updates to avoid loops
   if (authors?.some((author) => author.type === "bot")) {
     console.log("⏭️ Skipping bot-authored update");
@@ -53,58 +66,45 @@ async function handleDatabaseEvent(
     );
   }
 
-  // Check if the database has location properties and get its properties
-  try {
-    const response = await notion.databases.retrieve({
-      database_id: databaseId,
-    });
+  console.log(
+    "🔄 Page-in-database cache invalidation triggered by:",
+    eventType,
+  );
+  console.log(`🗑️ Clearing cache for database:`, databaseId);
+  console.log(`🗑️ Clearing cache for page:`, pageId);
 
-    const properties = response.properties;
+  // Revalidate the database and page
+  revalidateTag(databaseId);
+  revalidateTag(pageId);
 
-    // Check if all location properties exist in the database
-    const hasLocationProperties = LOCATION_PROPERTIES.every((prop) =>
-      Object.values(properties).some((p) => p.name === prop),
-    );
+  return new Response(
+    JSON.stringify({
+      success: true,
+      message: `Revalidated database: ${databaseId} and page: ${pageId}`,
+      eventType,
+      invalidatedTags: [databaseId, pageId],
+    }),
+    {
+      status: 200,
+      headers: {
+        "Content-Type": "application/json",
+      },
+    },
+  );
+}
 
-    // Revalidate all pages in the database
-    const pages = await notion.databases.query({
-      database_id: databaseId,
-    });
-    pages.results.forEach((page) => {
-      revalidateTag(page.id);
-    });
-
-    if (hasLocationProperties) {
-      console.log("🔄 Cache invalidation triggered by:", eventType);
-      console.log(`🗑️ Clearing cache for path:`, databaseId);
-
-      // Revalidate both paths
-      console.log(`♻️ Revalidating path: ${databaseId}`);
-      revalidateTag(databaseId);
-
-      return new Response(
-        JSON.stringify({
-          success: true,
-          message: `Revalidated path: ${databaseId}`,
-          reason: "Database contains location properties",
-          eventType,
-        }),
-        {
-          status: 200,
-          headers: {
-            "Content-Type": "application/json",
-          },
-        },
-      );
-    }
-
-    console.log(
-      "⏭️ Skipping cache invalidation - Database does not contain location properties",
-    );
+function handleDatabaseEvent(
+  databaseId: string,
+  eventType: string,
+  authors?: { id: string; type: string }[],
+): Response {
+  // Ignore bot-authored updates to avoid loops
+  if (authors?.some((author) => author.type === "bot")) {
+    console.log("⏭️ Skipping bot-authored update");
     return new Response(
       JSON.stringify({
         success: true,
-        message: "Database does not contain location properties",
+        message: "Skipped bot-authored update",
         eventType,
       }),
       {
@@ -114,21 +114,28 @@ async function handleDatabaseEvent(
         },
       },
     );
-  } catch (error) {
-    console.error("Error checking database properties:", error);
-    return new Response(
-      JSON.stringify({
-        success: false,
-        error: "Failed to check database properties",
-      }),
-      {
-        status: 500,
-        headers: {
-          "Content-Type": "application/json",
-        },
-      },
-    );
   }
+
+  console.log("🔄 Database cache invalidation triggered by:", eventType);
+  console.log(`🗑️ Clearing cache for database:`, databaseId);
+
+  // Revalidate the database
+  revalidateTag(databaseId);
+
+  return new Response(
+    JSON.stringify({
+      success: true,
+      message: `Revalidated database: ${databaseId}`,
+      eventType,
+      invalidatedTags: [databaseId],
+    }),
+    {
+      status: 200,
+      headers: {
+        "Content-Type": "application/json",
+      },
+    },
+  );
 }
 
 export async function POST(request: Request) {
@@ -212,24 +219,61 @@ export async function POST(request: Request) {
       );
     }
 
-    // Check if event has a database parent
-    if (jsonBody.data?.parent?.type === "database" && jsonBody.data.parent.id) {
-      return handleDatabaseEvent(
+    // Check if this is a relevant event type
+    const eventType = jsonBody.type ?? "unknown";
+    if (!RELEVANT_EVENTS.includes(eventType)) {
+      console.log(`⏭️ Skipping irrelevant event type: ${eventType}`);
+      return new Response(
+        JSON.stringify({
+          success: true,
+          message: `Skipped irrelevant event: ${eventType}`,
+          eventType,
+        }),
+        {
+          status: 200,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        },
+      );
+    }
+
+    // Handle page events in databases
+    if (
+      jsonBody.data?.parent?.type === "database" &&
+      jsonBody.data.parent.id &&
+      jsonBody.entity?.id &&
+      jsonBody.entity.type === "page"
+    ) {
+      return handlePageInDatabaseEvent(
         jsonBody.data.parent.id,
-        jsonBody.type ?? "unknown",
+        jsonBody.entity.id,
+        eventType,
         jsonBody.authors,
       );
     }
 
-    // Handle other webhook events
-    console.log("Valid webhook received:", {
-      signature: notionSignature,
-      body: jsonBody,
+    // Handle direct database events
+    if (jsonBody.entity?.type === "database" && jsonBody.entity.id) {
+      return handleDatabaseEvent(
+        jsonBody.entity.id,
+        eventType,
+        jsonBody.authors,
+      );
+    }
+
+    // Handle other webhook events that don't require cache invalidation
+    console.log("Valid webhook received but no cache invalidation needed:", {
+      eventType,
+      entityType: jsonBody.entity?.type,
+      parentType: jsonBody.data?.parent?.type,
     });
 
     return new Response(
       JSON.stringify({
         success: true,
+        message: "Webhook processed but no cache invalidation needed",
+        eventType,
       }),
       {
         status: 200,
