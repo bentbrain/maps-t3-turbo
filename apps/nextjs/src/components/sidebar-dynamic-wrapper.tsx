@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { getNotionUrl } from "@/lib/get-initial-data";
+import { getNotionUrl } from "@/lib/types";
 import { Notion } from "@ridemountainpig/svgl-react";
 
 import { Button } from "@acme/ui/button";
@@ -11,12 +11,14 @@ import { CopyButton } from "./copy-button";
 
 export const SidebarButtonWrapper = ({
   databaseId,
+  shareHash,
 }: {
   databaseId: string;
+  shareHash: string;
 }) => {
   return (
     <>
-      <CopyButton databaseId={databaseId} />
+      <CopyButton shareHash={shareHash} />
       <Button variant={"outline"} asChild>
         <Link
           target="_blank"

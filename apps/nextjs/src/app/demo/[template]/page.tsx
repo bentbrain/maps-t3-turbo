@@ -63,19 +63,20 @@ async function DynamicParts({ params }: { params: Promise<Template> }) {
   const { template } = await params;
 
   const databaseId = templateDatabaseIds[template];
+  const userId = env.ADMIN_NOTION_USER_ID;
 
   prefetch(
     trpc.user.getDatabaseProperties.queryOptions({
       databaseId,
-      userId: env.ADMIN_NOTION_USER_ID,
+      userId,
     }),
   );
   const cachedResult = cache(
     async () => {
-      const result = await getInitialData({ databaseId });
+      const result = await getInitialData({ databaseId, userId });
       return result;
     },
-    [databaseId],
+    [databaseId, userId],
     {
       tags: [databaseId],
     },

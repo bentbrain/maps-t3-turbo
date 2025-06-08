@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { unstable_cache as cache } from "next/cache";
+import { encodeDatabaseParams } from "@/lib/database-hash";
 import { getInitialData } from "@/lib/get-initial-data";
 import { caller, prefetch, trpc } from "@/trpc/server";
 
@@ -31,10 +32,10 @@ export async function AppSidebar({
 
   const cachedResult = cache(
     async () => {
-      const result = await getInitialData({ databaseId });
+      const result = await getInitialData({ databaseId, userId });
       return result;
     },
-    [databaseId],
+    [databaseId, userId],
     {
       tags: [databaseId],
     },
@@ -45,6 +46,9 @@ export async function AppSidebar({
   if (!result.success) {
     return null;
   }
+
+  // Generate share hash for the database
+  const shareHash = encodeDatabaseParams(userId, databaseId);
 
   return (
     <Sidebar side="left">
@@ -74,7 +78,7 @@ export async function AppSidebar({
             </div>
           }
         >
-          <SidebarButtonWrapper databaseId={databaseId} />
+          <SidebarButtonWrapper databaseId={databaseId} shareHash={shareHash} />
         </Suspense>
       </SidebarFooter>
     </Sidebar>

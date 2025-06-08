@@ -1,7 +1,7 @@
 "use client";
 
-import type { Location } from "@/lib/get-initial-data";
 import type { DatabaseProperty } from "@/lib/sidebar-store";
+import type { Location } from "@/lib/types";
 import { useState } from "react";
 import { useMapStore } from "@/lib/map-store";
 import { filterLocations, sortLocations } from "@/lib/map-utils";

@@ -1,52 +1,15 @@
 "server only";
 
 import type { PageObjectResponse } from "@notionhq/client/build/src/api-endpoints";
+import { clerkClient } from "@clerk/nextjs/server";
 import { Client } from "@notionhq/client";
 
-import { env } from "@acme/env/env";
+import type { Location, MapBounds } from "./types";
+import { ErrorMessage, getNotionUrl } from "./types";
 
-export interface SelectValue {
-  id: string;
-  name: string;
-  color: string;
-}
-
-interface FilterOption {
-  name: string;
-  values?: SelectValue[];
-  value?: number;
-}
-
-export interface Location {
-  id: string;
-  name: string;
-  address: string;
-  website: string | null;
-  lng: number;
-  lat: number;
-  notionUrl: string;
-  icon: string | null;
-  filterOptions: FilterOption[];
-  properties: Record<string, { type: string; number?: number }>;
-}
-
-export interface MapBounds {
-  north: number;
-  south: number;
-  east: number;
-  west: number;
-}
-
-export enum ErrorMessage {
-  NO_VALID_PAGES_FOUND = "No valid pages found in the database",
-  MISSING_REQUIRED_PROPERTIES = "Missing required properties",
-  FAILED_TO_FETCH_DATABASE = "Failed to fetch database",
-  NOTION_TOKEN_NOT_CONFIGURED = "Notion token is not configured",
-}
-
-export const getNotionUrl = (id: string) => {
-  return `https://notion.so/${id.replace(/-/g, "")}`;
-};
+// Re-export types for backward compatibility
+export type { Location, MapBounds, SelectValue, FilterOption } from "./types";
+export { ErrorMessage, getNotionUrl } from "./types";
 
 function calculateBounds(locations: Location[]): MapBounds {
   const bounds = locations.reduce(
@@ -89,21 +52,27 @@ type InitialDataResult =
 
 export const getInitialData = async ({
   databaseId,
+  userId,
 }: {
   databaseId: string;
+  userId: string;
 }): Promise<InitialDataResult> => {
   try {
-    const token = env.NEXT_PUBLIC_NOTION_TOKEN;
-    if (!token) {
+    const clerk = await clerkClient();
+    const clerkResponse = await clerk.users.getUserOauthAccessToken(
+      userId,
+      "notion",
+    );
+    const accessToken = clerkResponse.data[0]?.token ?? "";
+
+    if (!accessToken) {
       return {
         success: false,
         error: ErrorMessage.NOTION_TOKEN_NOT_CONFIGURED,
       };
     }
 
-    const notion = new Client({
-      auth: token,
-    });
+    const notion = new Client({ auth: accessToken });
 
     const response = await notion.databases.query({
       database_id: databaseId,

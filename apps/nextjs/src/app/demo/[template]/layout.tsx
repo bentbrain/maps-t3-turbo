@@ -6,6 +6,7 @@ import SearchBar from "@/components/search-bar";
 import { AppSidebar } from "@/components/sidebar-app";
 import { RightSidebarTrigger } from "@/components/sidebar-dynamic-wrapper";
 import { PageSidebar } from "@/components/sidebar-page";
+import { encodeDatabaseParams } from "@/lib/database-hash";
 import { getInitialData } from "@/lib/get-initial-data";
 import { z } from "zod";
 
@@ -78,16 +79,17 @@ export default async function ShowcaseLayout({
 const DynamicSearch = async ({
   params,
 }: {
-  params: Promise<{ userId: string; databaseId: string }>;
+  params: Promise<{ databaseId: string }>;
 }) => {
-  const { userId, databaseId } = await params;
+  const { databaseId } = await params;
 
+  const userId = env.ADMIN_NOTION_USER_ID;
   const cachedResult = cache(
     async () => {
-      const result = await getInitialData({ databaseId });
+      const result = await getInitialData({ databaseId, userId });
       return result;
     },
-    [databaseId],
+    [databaseId, userId],
     {
       tags: [databaseId],
     },
@@ -99,11 +101,15 @@ const DynamicSearch = async ({
     return null;
   }
 
+  // Generate share hash for the database
+  const shareHash = encodeDatabaseParams(userId, databaseId);
+
   return (
     <SearchBar
       userId={userId}
       selectedDatabaseId={databaseId}
       locations={result.locations}
+      shareHash={shareHash}
       showcase
     />
   );

@@ -1,5 +1,5 @@
-import type { Location } from "@/lib/get-initial-data";
 import type { DatabaseProperty } from "@/lib/sidebar-store";
+import type { Location } from "@/lib/types";
 import { useState } from "react";
 import { useSidebarStore } from "@/lib/sidebar-store";
 import { CircleMinus, Loader2, Plus } from "lucide-react";

@@ -86,10 +86,10 @@ async function DynamicParts({
   );
   const cachedResult = cache(
     async () => {
-      const result = await getInitialData({ databaseId });
+      const result = await getInitialData({ databaseId, userId });
       return result;
     },
-    [databaseId],
+    [databaseId, userId],
     {
       tags: [databaseId],
     },

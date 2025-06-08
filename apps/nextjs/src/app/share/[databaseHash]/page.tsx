@@ -3,9 +3,9 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import GoogleMapView from "@/components/google-map-view";
 import RetryButton from "@/components/retry-button";
+import { decodeDatabaseParams } from "@/lib/database-hash";
 import { getInitialData, getNotionUrl } from "@/lib/get-initial-data";
 import { AlertCircle, Loader2 } from "lucide-react";
-import { z } from "zod";
 
 import { env } from "@acme/env/env";
 import { Button } from "@acme/ui/button";
@@ -20,7 +20,7 @@ import {
 export default function Page({
   params,
 }: {
-  params: Promise<{ databaseId: string }>;
+  params: Promise<{ databaseHash: string }>;
 }) {
   return (
     <div className="h-full w-full">
@@ -40,33 +40,35 @@ export default function Page({
 async function DynamicParts({
   params,
 }: {
-  params: Promise<{ databaseId: string }>;
+  params: Promise<{ databaseHash: string }>;
 }) {
-  const { databaseId } = await params;
+  const { databaseHash } = await params;
 
-  if (!z.string().uuid().safeParse(databaseId).success) {
-    redirect(`/?databaseId=${databaseId}`);
-  }
+  try {
+    const { userId, databaseId } = decodeDatabaseParams(databaseHash);
+    const result = await getInitialData({ databaseId, userId });
 
-  const result = await getInitialData({ databaseId });
+    if (!result.success) {
+      await fetch(
+        `${env.NEXT_PUBLIC_SITE_URL}/api/revalidate-route/${databaseId}`,
+      );
+      return <ErrorPage databaseId={databaseId} />;
+    }
 
-  if (!result.success) {
-    await fetch(
-      `${env.NEXT_PUBLIC_SITE_URL}/api/revalidate-route/${databaseId}`,
+    return (
+      <main className="h-dvh w-full">
+        <GoogleMapView
+          locations={result.locations}
+          initialBounds={result.initialBounds}
+          initialCenter={result.initialCenter}
+          sharePage={true}
+        />
+      </main>
     );
-    return <ErrorPage databaseId={databaseId} />;
+  } catch (error) {
+    console.error("Failed to decode database hash:", error);
+    redirect("/?error=invalid-share-link");
   }
-
-  return (
-    <main className="h-dvh w-full">
-      <GoogleMapView
-        locations={result.locations}
-        initialBounds={result.initialBounds}
-        initialCenter={result.initialCenter}
-        sharePage={true}
-      />
-    </main>
-  );
 }
 
 const ErrorPage = ({ databaseId }: { databaseId: string }) => {
