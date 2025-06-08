@@ -1,7 +1,7 @@
 "use client";
 
-import type { Location } from "@/lib/get-initial-data";
 import type { DatabaseProperty } from "@/lib/sidebar-store";
+import type { Location } from "@/lib/types";
 import type { Marker } from "@googlemaps/markerclusterer";
 
 // Map styles to hide road labels

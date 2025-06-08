@@ -1,13 +1,13 @@
 "use client";
 
-import type { Location } from "@/lib/get-initial-data";
+import type { Location } from "@/lib/types";
 import type { FuseResultMatch } from "fuse.js";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { redirect, useRouter } from "next/navigation";
-import { getNotionUrl } from "@/lib/get-initial-data";
 import { useMapStore } from "@/lib/map-store";
 import { useSidebarStore } from "@/lib/sidebar-store";
+import { getNotionUrl } from "@/lib/types";
 import { useExtensionStatus } from "@/lib/use-extension-status";
 import { useTRPC } from "@/trpc/react";
 import { useUser } from "@clerk/nextjs";
@@ -55,11 +55,13 @@ function SearchBar({
   locations,
   userId,
   selectedDatabaseId,
+  shareHash,
   showcase = false,
 }: {
   locations: Location[];
   selectedDatabaseId: string;
   userId: string;
+  shareHash: string;
   showcase?: boolean;
 }) {
   "use memo";
@@ -212,7 +214,7 @@ function SearchBar({
             <SidebarToggleCommand setOpen={setOpen} />
             <ClearFiltersCommand setOpen={setOpen} />
             <CurrentLocationCommand setOpen={setOpen} />
-            <ShareCommand selectedDatabaseId={selectedDatabaseId} />
+            <ShareCommand shareHash={shareHash} />
             <CommandItem
               onSelect={() => {
                 redirect(getNotionUrl(selectedDatabaseId));
@@ -508,8 +510,8 @@ const CurrentLocationCommand = ({
   );
 };
 
-function getShareUrl(databaseId: string, withFilters: boolean) {
-  const base = `${env.NEXT_PUBLIC_SITE_URL}/share/${databaseId}`;
+function getShareUrl(shareHash: string, withFilters: boolean) {
+  const base = `${env.NEXT_PUBLIC_SITE_URL}/share/${shareHash}`;
   if (!withFilters) return base;
   // Use current window's search params for filters/grouping
   if (typeof window === "undefined") return base;
@@ -517,11 +519,7 @@ function getShareUrl(databaseId: string, withFilters: boolean) {
   return params ? `${base}${params}` : base;
 }
 
-const ShareCommand = ({
-  selectedDatabaseId,
-}: {
-  selectedDatabaseId: string;
-}) => {
+const ShareCommand = ({ shareHash }: { shareHash: string }) => {
   const { filters } = useSidebarStore();
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -529,7 +527,7 @@ const ShareCommand = ({
   const hasFilters = filters.length > 0;
 
   const handleCopy = (type: "all" | "filtered") => {
-    const url = getShareUrl(selectedDatabaseId, type === "filtered");
+    const url = getShareUrl(shareHash, type === "filtered");
     navigator.clipboard
       .writeText(url)
       .then(() => {

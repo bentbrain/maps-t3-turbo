@@ -9,8 +9,8 @@ import { env } from "@acme/env/env";
 import { Button } from "@acme/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@acme/ui/popover";
 
-function getShareUrl(databaseId: string, withFilters: boolean) {
-  const base = `${env.NEXT_PUBLIC_SITE_URL}/share/${databaseId}`;
+function getShareUrl(shareHash: string, withFilters: boolean) {
+  const base = `${env.NEXT_PUBLIC_SITE_URL}/share/${shareHash}`;
   if (!withFilters) return base;
   // Use current window's search params for filters/grouping
   if (typeof window === "undefined") return base;
@@ -18,7 +18,7 @@ function getShareUrl(databaseId: string, withFilters: boolean) {
   return params ? `${base}${params}` : base;
 }
 
-export function CopyButton({ databaseId }: { databaseId: string }) {
+export function CopyButton({ shareHash }: { shareHash: string }) {
   const { filters } = useSidebarStore();
   const [copied, setCopied] = useState<boolean>(false);
   const [isOpen, setIsOpen] = useState(false);
@@ -26,7 +26,7 @@ export function CopyButton({ databaseId }: { databaseId: string }) {
   const hasFilters = filters.length > 0;
 
   const handleCopy = (type: "all" | "filtered") => {
-    const url = getShareUrl(databaseId, type === "filtered");
+    const url = getShareUrl(shareHash, type === "filtered");
     navigator.clipboard
       .writeText(url)
       .then(() => {

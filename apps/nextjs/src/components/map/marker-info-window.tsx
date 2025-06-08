@@ -1,4 +1,4 @@
-import type { Location } from "@/lib/get-initial-data";
+import type { Location } from "@/lib/types";
 import { MapIcon } from "lucide-react";
 
 import type { notionColourMap } from "@acme/ui";

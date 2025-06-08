@@ -1,6 +1,6 @@
 "use client";
 
-import type { Location, MapBounds } from "@/lib/get-initial-data";
+import type { Location, MapBounds } from "@/lib/types";
 import type { Marker } from "@googlemaps/markerclusterer";
 import { Fragment, useEffect, useRef, useState } from "react";
 import { useMapStore } from "@/lib/map-store";

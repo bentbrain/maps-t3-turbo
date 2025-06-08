@@ -10,6 +10,7 @@ export const env = createEnv({
     CHROME_EXECUTABLE_PATH: z.string().optional(),
     ADMIN_NOTION_USER_ID: z.string().min(1),
     GITHUB_PAT: z.string().min(1),
+    NEXT_PRIVATE_DATABASE_HASH_SECRET: z.string().min(1),
   },
   client: {
     NEXT_PUBLIC_NOTION_TOKEN: z.string().min(1),
@@ -47,6 +48,8 @@ export const env = createEnv({
     CHROME_EXECUTABLE_PATH: process.env.CHROME_EXECUTABLE_PATH,
     ADMIN_NOTION_USER_ID: process.env.ADMIN_NOTION_USER_ID,
     GITHUB_PAT: process.env.GITHUB_PAT,
+    NEXT_PRIVATE_DATABASE_HASH_SECRET:
+      process.env.NEXT_PRIVATE_DATABASE_HASH_SECRET,
   },
   // For Next.js >= 13.4.4, you only need to destructure client variables:
   // experimental__runtimeEnv: {
