@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { supportedDomains } from "@/utils/general";
 import { useTRPC } from "@/utils/react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -45,16 +46,37 @@ interface LocationData {
   [key: string]: string | string[] | undefined;
 }
 
-async function checkIsOnGoogleMaps(): Promise<boolean> {
+// Generic function to check if we're on any supported domain
+async function checkIsOnSupportedDomain(): Promise<{
+  isSupported: boolean;
+  currentDomain?: keyof typeof supportedDomains;
+  currentUrl?: string;
+}> {
   try {
     const [tab] = await Browser.tabs.query({
       active: true,
       currentWindow: true,
     });
-    return !!tab?.url?.includes("google.com/maps");
+
+    if (!tab?.url) {
+      return { isSupported: false };
+    }
+
+    // Check each supported domain
+    for (const [domainKey, domainConfig] of Object.entries(supportedDomains)) {
+      if (tab.url.includes(domainConfig.url)) {
+        return {
+          isSupported: true,
+          currentDomain: domainKey as keyof typeof supportedDomains,
+          currentUrl: tab.url,
+        };
+      }
+    }
+
+    return { isSupported: false, currentUrl: tab.url };
   } catch (error) {
     console.error("Error checking current tab:", error);
-    return false;
+    return { isSupported: false };
   }
 }
 
@@ -65,8 +87,22 @@ async function fetchLocationData(): Promise<LocationData> {
       currentWindow: true,
     });
 
-    if (!tab.url?.includes("google.com/maps")) {
-      throw new Error("Please open this extension on Google Maps");
+    if (!tab?.url) {
+      throw new Error("Could not find active tab URL");
+    }
+
+    // Check if we're on a supported domain
+    const isSupported = Object.values(supportedDomains).some((domainConfig) =>
+      tab.url!.includes(domainConfig.url),
+    );
+
+    if (!isSupported) {
+      const supportedSites = Object.values(supportedDomains)
+        .map((config) => `${config.displayName} (${config.url})`)
+        .join(", ");
+      throw new Error(
+        `Please open this extension on a supported site: ${supportedSites}`,
+      );
     }
 
     if (!tab.id) {
@@ -91,7 +127,7 @@ async function fetchLocationData(): Promise<LocationData> {
       error.message.includes("Could not establish connection")
     ) {
       throw new Error(
-        "Extension not ready. Please refresh this Google Maps page and try again.",
+        "Extension not ready. Please refresh this page and try again.",
       );
     }
 
@@ -138,14 +174,14 @@ export default function LocationForm() {
     },
   });
 
-  // Check if we're on Google Maps
-  const { data: isOnGoogleMaps = false } = useQuery({
-    queryKey: ["isOnGoogleMaps"],
-    queryFn: checkIsOnGoogleMaps,
+  // Check if we're on any supported domain
+  const { data: domainCheck = { isSupported: false } } = useQuery({
+    queryKey: ["supportedDomain"],
+    queryFn: checkIsOnSupportedDomain,
     staleTime: 1000 * 10, // 10 seconds
   });
 
-  // Query for location data - only when on Google Maps
+  // Query for location data - only when on a supported domain
   const {
     data: locationData,
     error: locationError,
@@ -155,7 +191,7 @@ export default function LocationForm() {
     queryFn: fetchLocationData,
     retry: 2,
     retryDelay: 1000,
-    enabled: isOnGoogleMaps, // Only fetch when on Google Maps
+    enabled: domainCheck.isSupported, // Only fetch when on a supported domain
   });
 
   // Update form when location data changes
@@ -235,15 +271,25 @@ export default function LocationForm() {
     );
   }
 
-  // Show message when not on Google Maps
-  if (!isOnGoogleMaps) {
+  // Show message when not on any supported domain
+  if (!domainCheck.isSupported) {
     return (
-      <div className="p-2">
-        <Button className="w-full justify-start px-4! text-left" asChild>
-          <a href="https://www.google.com/maps" target="_blank">
-            <Map className="mr-2 h-4 w-4" /> Open Google Maps
-          </a>
-        </Button>
+      <div className="space-y-2 p-2">
+        <p className="text-muted-foreground mb-2 text-sm">
+          Open a supported site to extract location data:
+        </p>
+        {Object.entries(supportedDomains).map(([domainKey, domainConfig]) => (
+          <Button
+            key={domainKey}
+            className="w-full justify-start text-left"
+            variant="outline"
+            asChild
+          >
+            <a href={`https://${domainConfig.url}`} target="_blank">
+              <Map className="mr-2 h-4 w-4" /> Open {domainConfig.displayName}
+            </a>
+          </Button>
+        ))}
       </div>
     );
   }

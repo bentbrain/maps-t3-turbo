@@ -39,7 +39,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   });
 
   return {
-    title: `Showcase: ${title}`,
+    title: `Demo: ${title}`,
   };
 }
 
