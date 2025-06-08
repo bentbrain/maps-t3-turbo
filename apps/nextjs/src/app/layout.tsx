@@ -26,8 +26,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Notion Locations",
-  description: "Location mapping made easy in Notion.",
+  title: "Maps & Locations",
+  description:
+    "A third-party integration to save locations from Google Maps to your Notion workspace.",
 };
 
 export default function RootLayout({

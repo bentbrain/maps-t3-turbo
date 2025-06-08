@@ -31,7 +31,7 @@ const features = [
       },
       {
         icon: <CheckCircle className="mr-2 h-4 w-4" />,
-        description: "Automatic Notion integration",
+        description: "Connects to your Notion workspace",
       },
       {
         icon: <CheckCircle className="mr-2 h-4 w-4" />,
@@ -69,7 +69,7 @@ const features = [
       },
       {
         icon: <CheckCircle className="mr-2 h-4 w-4" />,
-        description: "Direct Notion integration",
+        description: "Direct connection to Notion",
       },
       {
         icon: <CheckCircle className="mr-2 h-4 w-4" />,
@@ -86,12 +86,12 @@ export default function Home() {
         <div className="flex items-center justify-center gap-2 sm:justify-start">
           <Image
             src="/logo.png"
-            alt="Notion Locations"
+            alt="Maps & locations"
             width={23}
             height={23}
           />
           <span className="text-lg font-bold text-gray-900">
-            Notion Locations
+            Maps & Locations
           </span>
         </div>
         <div className="hidden items-center justify-end gap-1 sm:flex">
@@ -137,6 +137,10 @@ export default function Home() {
             Save Google Maps locations
             <span className=""> to Notion.</span>
           </h1>
+          <p className="text-muted-foreground mb-4 text-xs">
+            *Independent third-party integration - not affiliated with, endorsed
+            by, or certified by Notion
+          </p>
           <SignedIn>
             <Suspense fallback={<div>Loading...</div>}>
               <div className="pt-4 text-left">
@@ -149,7 +153,8 @@ export default function Home() {
               <SignInButton>
                 <button className="cursor-pointer underline">Sign in</button>
               </SignInButton>{" "}
-              with <span className="font-medium">Notion</span>.{" "}
+              to connect your <span className="font-medium">Notion</span>{" "}
+              workspace.{" "}
               <a className="underline" href="#download">
                 Download
               </a>{" "}
@@ -180,8 +185,9 @@ export default function Home() {
               Everything you need to organize your locations
             </h2>
             <p className="mx-auto max-w-2xl text-lg text-gray-600">
-              A powerful combination of a Chrome extension and web app to make
-              location management effortless.
+              A powerful combination of a Chrome extension and web app that
+              connects to your Notion workspace to make location management
+              effortless.
             </p>
           </div>
 
@@ -203,7 +209,8 @@ export default function Home() {
               </h2>
               <p className="mx-auto max-w-2xl text-lg text-gray-600">
                 Create your account and install the Chrome extension to start
-                saving locations from Google Maps to your Notion workspace.
+                saving locations from Google Maps directly to your personal
+                Notion workspace.
               </p>
             </div>
 
@@ -354,7 +361,7 @@ export default function Home() {
             Support the project
           </h2>
           <p className="mb-8 text-lg text-balance text-gray-600">
-            Notion Locations is completely free and open source. If you find it
+            Maps & locations is completely free and open source. If you find it
             useful, consider supporting its development.
           </p>
           <div className="flex flex-col justify-center gap-4 sm:flex-row">
@@ -392,7 +399,7 @@ export default function Home() {
             <Link className="hover:underline" href="/terms-of-use">
               Terms of Use
             </Link>
-            <div>&copy; {new Date().getFullYear()} Notion Locations</div>
+            <div>&copy; {new Date().getFullYear()} Maps & locations</div>
           </div>
         </div>
       </footer>
