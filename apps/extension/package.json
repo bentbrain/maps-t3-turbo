@@ -1,6 +1,6 @@
 {
   "name": "@acme/extension",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "A simple chrome & firefox extension template with Vite, React, TypeScript and Tailwind CSS.",
   "repository": {
     "type": "git",
