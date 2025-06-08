@@ -27,7 +27,6 @@ import {
   Repeat,
   Search,
   Share,
-  User,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -312,7 +311,7 @@ const SignUpCommand = () => {
     >
       <div className="flex w-full items-center justify-between gap-2">
         <span className="flex items-center gap-2 font-medium">
-          <User className="h-4 w-4" /> Create an account
+          <Notion className="h-4 w-4" /> Sign in with Notion
         </span>
         <CornerDownLeft
           width={8}
