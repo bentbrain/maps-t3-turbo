@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.4.0](https://github.com/bentbrain/maps-t3-turbo/compare/extension-v1.3.1...extension-v1.4.0) (2025-06-08)
+
+
+### Features
+
+* added support for additional sites ([2895ce1](https://github.com/bentbrain/maps-t3-turbo/commit/2895ce1c12c62f191135a144c33d23616e9492c4))
+* added support for additional sites ([4c3c6e2](https://github.com/bentbrain/maps-t3-turbo/commit/4c3c6e20483aabec3a5c16491c3df6f7e0839cdb))
+
 ## [1.3.1](https://github.com/bentbrain/maps-t3-turbo/compare/extension-v1.3.0...extension-v1.3.1) (2025-06-07)
 
 
