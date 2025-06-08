@@ -1,7 +1,6 @@
 import type { TRPCQueryOptions } from "@trpc/tanstack-react-query";
 import { cache } from "react";
 import { headers } from "next/headers";
-import { auth } from "@clerk/nextjs/server";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { createTRPCOptionsProxy } from "@trpc/tanstack-react-query";
 
@@ -16,8 +15,6 @@ import { createQueryClient } from "./query-client";
  */
 const createContext = cache(async () => {
   const heads = new Headers(await headers());
-  const { userId } = await auth();
-  console.log(">>> createContext: ", userId);
   heads.set("x-trpc-source", "rsc");
 
   return createTRPCContext({ headers: heads });
