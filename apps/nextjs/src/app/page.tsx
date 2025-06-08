@@ -116,9 +116,11 @@ export default function Home() {
           </Button>
           <SignedOut>
             <Button variant="outline" asChild>
-              <Link href="/sign-in">
-                <Notion className="h-5 w-5" /> Sign in with Notion
-              </Link>
+              <SignInButton>
+                <span className="flex items-center gap-2">
+                  <Notion className="h-5 w-5" /> Sign in with Notion
+                </span>
+              </SignInButton>
             </Button>
           </SignedOut>
           <SignedIn>
@@ -180,9 +182,11 @@ export default function Home() {
                 </Link>
               </Button>
               <Button size="lg" variant="outline" asChild>
-                <Link href="/sign-in">
-                  <Notion className="h-5 w-5" /> Sign in with Notion
-                </Link>
+                <SignInButton>
+                  <span className="flex items-center gap-2">
+                    <Notion className="h-5 w-5" /> Sign in with Notion
+                  </span>
+                </SignInButton>
               </Button>
             </div>
           </SignedOut>
