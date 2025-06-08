@@ -8,9 +8,16 @@ export default function TermsOfUse() {
         <p>Last updated: {new Date().toLocaleDateString()}</p>
         <p>
           These Terms of Use (&quot;Terms&quot;) govern your access to and use
-          of our website {env.NEXT_PUBLIC_SITE_URL} (the &quot;Service&quot;).
-          By accessing or using the Service, you agree to be bound by these
-          Terms. If you do not agree, please do not use the Service.
+          of our website {env.NEXT_PUBLIC_SITE_URL} and our Google Chrome
+          extension (collectively, the &quot;Service&quot;). By accessing or
+          using the Service, you agree to be bound by these Terms. If you do not
+          agree, please do not use the Service.
+        </p>
+        <p>
+          <strong>Important:</strong> Maps & Locations is an independent
+          third-party integration that is not affiliated with, endorsed by, or
+          certified by Notion. We provide tools that connect to your personal
+          Notion workspace.
         </p>
         <h2>1. Use of the Service</h2>
         <ul>
@@ -26,9 +33,12 @@ export default function TermsOfUse() {
         </ul>
         <h2>2. Description of Service</h2>
         <p>
-          Our Service allows you to connect your Notion account and interact
-          with your Notion data in new ways. The Service is provided &quot;as
-          is&quot; and may be updated, changed, or discontinued at any time.
+          Our Service consists of a website and Chrome extension that allows you
+          to save locations from Google Maps directly to your personal Notion
+          workspace. The Service enables you to capture location data including
+          place names, addresses, and related information, and organize them in
+          your Notion databases. The Service is provided &quot;as is&quot; and
+          may be updated, changed, or discontinued at any time.
         </p>
         <h2>3. User Responsibilities</h2>
         <ul>
@@ -38,21 +48,34 @@ export default function TermsOfUse() {
           </li>
           <li>
             You must not use the Service to violate any laws or third-party
-            rights, including Notion&apos;s terms and policies.
+            rights, including Notion&apos;s terms and policies and Google&apos;s
+            terms and policies.
           </li>
           <li>
             You must not attempt to gain unauthorized access to any part of the
-            Service or its systems.
+            Service, its systems, or connected third-party services.
+          </li>
+          <li>
+            You are responsible for ensuring you have the right to save and
+            store the location data you capture using our Service.
           </li>
         </ul>
         <h2>4. Restrictions</h2>
         <ul>
-          <li>No reverse engineering, copying, or reselling the Service.</li>
+          <li>
+            No reverse engineering, copying, modification, or reselling the
+            Service or Chrome extension.
+          </li>
           <li>
             No use of the Service for illegal, harmful, or abusive activities.
           </li>
           <li>
-            No interference with the operation or security of the Service.
+            No interference with the operation or security of the Service or
+            connected third-party services.
+          </li>
+          <li>
+            No automated or excessive use that could overload our systems or
+            connected services.
           </li>
         </ul>
         <h2>5. Intellectual Property</h2>

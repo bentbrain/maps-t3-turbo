@@ -9,29 +9,43 @@ export default function PrivacyPolicy() {
         <p>
           This Privacy Policy explains how we collect, use, disclose, and
           safeguard your information when you use our website{" "}
-          {env.NEXT_PUBLIC_SITE_URL} (the &quot;Service&quot;). By using the
-          Service, you agree to the collection and use of information in
-          accordance with this policy.
+          {env.NEXT_PUBLIC_SITE_URL} and our Google Chrome extension
+          (collectively, the &quot;Service&quot;). By using the Service, you
+          agree to the collection and use of information in accordance with this
+          policy.
+        </p>
+        <p>
+          <strong>Important:</strong> Maps & Locations is an independent
+          third-party integration that is not affiliated with, endorsed by, or
+          certified by Notion. We connect to your personal Notion workspace to
+          provide our services.
         </p>
         <h2>1. Information We Collect</h2>
         <ul>
           <li>
-            <strong>Account Information:</strong> When you sign in with Notion,
-            we collect your name, email address, and Notion workspace details.
+            <strong>Account Information:</strong> When you connect your Notion
+            workspace, we collect your name, email address, and Notion workspace
+            details.
+          </li>
+          <li>
+            <strong>Location Data:</strong> Through our Chrome extension, we
+            collect location information from Google Maps that you choose to
+            save, including place names, addresses, coordinates, and associated
+            metadata.
           </li>
           <li>
             <strong>Notion Data:</strong> With your permission, we access and
-            process content from your Notion workspace as required to provide
-            our Service.
+            write data to your personal Notion workspace as required to save
+            your locations and provide our Service.
           </li>
           <li>
             <strong>Usage Data:</strong> We may collect information about how
-            you use the Service, such as access times, pages viewed, and device
-            information.
+            you use the Service (both website and extension), such as access
+            times, pages viewed, extension usage, and device information.
           </li>
           <li>
             <strong>Cookies & Tracking:</strong> We use cookies and similar
-            tracking technologies to enhance your experience.
+            tracking technologies to enhance your experience on our website.
           </li>
         </ul>
         <h2>2. How We Use Your Information</h2>
@@ -81,9 +95,26 @@ export default function PrivacyPolicy() {
         </ul>
         <h2>6. Third-Party Services</h2>
         <p>
-          Our Service may contain links to third-party sites or services. We are
-          not responsible for their privacy practices.
+          Our Service integrates with and relies on third-party services
+          including:
         </p>
+        <ul>
+          <li>
+            <strong>Notion:</strong> We connect to your personal Notion
+            workspace to save location data. Your use of Notion is governed by
+            Notion's own terms of service and privacy policy.
+          </li>
+          <li>
+            <strong>Google Maps:</strong> Our Chrome extension operates on
+            Google Maps to capture location data. Your use of Google Maps is
+            governed by Google's terms of service and privacy policy.
+          </li>
+          <li>
+            <strong>Other Services:</strong> Our Service may contain links to
+            other third-party sites or services. We are not responsible for
+            their privacy practices.
+          </li>
+        </ul>
         <h2>7. Children&apos;s Privacy</h2>
         <p>
           Our Service is not intended for children under 13. We do not knowingly
