@@ -12,8 +12,9 @@ export const SignInButtons = () => {
         <Button className="cursor-pointer" variant="outline" asChild>
           <SignInButton>
             <span className="flex items-center gap-2">
-              <Notion className="hidden h-5 w-5 sm:block" /> Sign in{" "}
-              <span className="hidden sm:block">with Notion</span>
+              <Notion className="hidden h-5 w-5 sm:block" />
+              <span className="block sm:hidden">Sign in</span>
+              <span className="hidden sm:block">Sign in with Notion</span>
             </span>
           </SignInButton>
         </Button>
