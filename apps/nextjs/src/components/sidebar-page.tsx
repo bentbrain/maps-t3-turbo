@@ -176,10 +176,14 @@ function PageSidebarSkeleton() {
 export function PageSidebar() {
   const { selectedMarkerId } = useMapStore();
   const { rightSidebar } = useMultiSidebar();
-  const { open: rightSidebarOpen, toggleSidebar: toggleRightSidebar } =
-    rightSidebar;
+  const { toggleSidebar: toggleRightSidebar } = rightSidebar;
   const trpc = useTRPC();
   const { databaseId, userId } = useParams();
+
+  // Use the correct state based on mobile vs desktop
+  const rightSidebarOpen = rightSidebar.isMobile
+    ? rightSidebar.openMobile
+    : rightSidebar.open;
 
   const {
     data: page,
