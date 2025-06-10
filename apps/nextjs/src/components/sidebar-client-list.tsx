@@ -265,7 +265,7 @@ export function SidebarClientList({
           </TabsTrigger>
         </TabsList>
       </div>
-      <TabsContent className="pr-2" value="locations">
+      <TabsContent value="locations">
         {/* Group Controls */}
         <Select
           value={groupBy ?? "none"}
@@ -295,7 +295,7 @@ export function SidebarClientList({
           groupBy={groupBy}
         />
       </TabsContent>
-      <TabsContent className="pr-2" value="filters">
+      <TabsContent value="filters">
         <SidebarFilterSort
           databaseProperties={properties}
           locations={locations}

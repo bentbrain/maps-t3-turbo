@@ -26,7 +26,7 @@ export function AppSidebar({
 }) {
   return (
     <Sidebar className="bg-white" variant="floating" side="left">
-      <SidebarHeader className="stable-gutter overflow-auto">
+      <SidebarHeader className="stable-gutter overflow-auto pr-0">
         {showcase ? null : (
           <Suspense
             fallback={<Skeleton className="mx-auto h-9 w-full max-w-sm" />}
