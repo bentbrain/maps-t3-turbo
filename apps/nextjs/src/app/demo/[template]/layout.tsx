@@ -50,9 +50,7 @@ export default async function ShowcaseLayout({
 
   return (
     <MultiSidebarProvider defaultRightOpen={false}>
-      <Suspense>
-        <AppSidebar showcase params={showcaseParams} />
-      </Suspense>
+      <AppSidebar showcase params={showcaseParams} />
       <div className="grid h-dvh w-full grid-rows-[auto_1fr]">
         <header className="bg-background grid grid-cols-[auto_1fr_auto] gap-6 p-3">
           <div className="flex justify-start">

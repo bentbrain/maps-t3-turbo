@@ -247,9 +247,11 @@ export function SidebarClientList({
   return (
     <Tabs className="pl-2" defaultValue="locations">
       <div className="pr-2">
-        <TabsList className="w-full">
-          <TabsTrigger value="locations">Locations</TabsTrigger>
-          <TabsTrigger value="filters">
+        <TabsList className="w-full rounded-full">
+          <TabsTrigger className="rounded-full" value="locations">
+            Locations
+          </TabsTrigger>
+          <TabsTrigger className="rounded-full" value="filters">
             Filters
             {filters.length > 0 && (
               <Badge variant="secondary">
@@ -263,7 +265,7 @@ export function SidebarClientList({
           </TabsTrigger>
         </TabsList>
       </div>
-      <TabsContent className="pr-2" value="locations">
+      <TabsContent value="locations">
         {/* Group Controls */}
         <Select
           value={groupBy ?? "none"}
@@ -293,7 +295,7 @@ export function SidebarClientList({
           groupBy={groupBy}
         />
       </TabsContent>
-      <TabsContent className="pr-2" value="filters">
+      <TabsContent value="filters">
         <SidebarFilterSort
           databaseProperties={properties}
           locations={locations}

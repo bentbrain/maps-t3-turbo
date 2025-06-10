@@ -27,6 +27,7 @@ import {
 import { createRoot } from "react-dom/client";
 
 import { env } from "@acme/env/env";
+import { useMultiSidebar } from "@acme/ui/sidebar";
 
 import { MarkerCluster } from "./map/marker-cluster";
 import { MarkerInfoWindow } from "./map/marker-info-window";
@@ -252,35 +253,47 @@ export default function GoogleMapView({
   const filteredLocations = filterLocations(locations, filters);
   const offsetLocations = getOffsetLocations(filteredLocations);
 
+  const { leftSidebar } = useMultiSidebar();
+
   return (
-    <APIProvider apiKey={env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}>
-      <Map
-        style={{ width: "100%", height: "100%" }}
-        defaultCenter={initialCenter}
-        defaultBounds={initialBounds}
-        gestureHandling="greedy"
-        disableDefaultUI={false}
-        mapId={env.NEXT_PUBLIC_GOOGLE_MAPS_ID}
-        onClick={() => setSelectedMarkerId(null)}
-        onIdle={(e) => useMapStore.getState().setMapInstance(e.map)}
-        styles={MAP_STYLES}
+    <div
+      className="h-full w-full bg-white p-0 transition-all data-[sidebar-state=expanded]:pr-3 data-[sidebar-state=expanded]:pb-3"
+      data-sidebar-state={leftSidebar.state}
+    >
+      <div
+        className="h-full w-full overflow-hidden rounded-none transition-all data-[sidebar-state=expanded]:rounded-lg"
+        data-sidebar-state={leftSidebar.state}
       >
-        {userLocation && (
-          <AdvancedMarker position={userLocation}>
-            <UserLocationDot />
-          </AdvancedMarker>
-        )}
-        {offsetLocations.length > 0 && (
-          <ClusteredMarkers
-            locations={offsetLocations}
-            activeInfoWindow={selectedMarkerId}
-            onToggleInfoWindow={(isOpen, locationId) =>
-              setSelectedMarkerId(isOpen ? locationId : null)
-            }
-            sharePage={sharePage}
-          />
-        )}
-      </Map>
-    </APIProvider>
+        <APIProvider apiKey={env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}>
+          <Map
+            style={{ width: "100%", height: "100%" }}
+            defaultCenter={initialCenter}
+            defaultBounds={initialBounds}
+            gestureHandling="greedy"
+            disableDefaultUI={false}
+            mapId={env.NEXT_PUBLIC_GOOGLE_MAPS_ID}
+            onClick={() => setSelectedMarkerId(null)}
+            onIdle={(e) => useMapStore.getState().setMapInstance(e.map)}
+            styles={MAP_STYLES}
+          >
+            {userLocation && (
+              <AdvancedMarker position={userLocation}>
+                <UserLocationDot />
+              </AdvancedMarker>
+            )}
+            {offsetLocations.length > 0 && (
+              <ClusteredMarkers
+                locations={offsetLocations}
+                activeInfoWindow={selectedMarkerId}
+                onToggleInfoWindow={(isOpen, locationId) =>
+                  setSelectedMarkerId(isOpen ? locationId : null)
+                }
+                sharePage={sharePage}
+              />
+            )}
+          </Map>
+        </APIProvider>
+      </div>
+    </div>
   );
 }
