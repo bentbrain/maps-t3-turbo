@@ -214,13 +214,13 @@ export function PageSidebar() {
   return (
     <Sidebar
       variant="floating"
-      className="stable-gutter @container bg-white"
+      className="@container bg-white pr-2"
       side="right"
     >
       {isLoading || isDatabaseLoading ? (
         <PageSidebarSkeleton />
       ) : error ? (
-        <SidebarContent className="stable-gutter">
+        <SidebarContent className="pr-2">
           <div>Error: {error.message}</div>
         </SidebarContent>
       ) : !page ? (

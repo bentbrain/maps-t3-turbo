@@ -26,7 +26,7 @@ export function AppSidebar({
 }) {
   return (
     <Sidebar className="bg-white" variant="floating" side="left">
-      <SidebarHeader className="stable-gutter overflow-auto pr-0">
+      <SidebarHeader className="overflow-auto pr-2">
         {showcase ? null : (
           <Suspense
             fallback={<Skeleton className="mx-auto h-9 w-full max-w-sm" />}
@@ -35,7 +35,7 @@ export function AppSidebar({
           </Suspense>
         )}
       </SidebarHeader>
-      <SidebarContent className="stable-gutter">
+      <SidebarContent className="pr-2">
         <Suspense fallback={<SidebarMenuSkeleton />}>
           <DynamicContent params={params} />
         </Suspense>
