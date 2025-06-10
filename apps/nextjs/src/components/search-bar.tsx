@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { redirect, useRouter } from "next/navigation";
 import { useMapStore } from "@/lib/map-store";
-import { useSidebarStore } from "@/lib/sidebar-store";
+import { filterLocations } from "@/lib/map-utils";
 import { getNotionUrl } from "@/lib/types";
 import { useExtensionStatus } from "@/lib/use-extension-status";
 import { useTRPC } from "@/trpc/react";
@@ -67,9 +67,15 @@ function SearchBar({
   const isMobile = useIsMobile();
   const [open, setOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const { focusFromSidebar } = useMapStore();
+  const { focusFromSidebar, filters, clearFilters } = useMapStore();
   const inputRef = useRef<HTMLInputElement>(null);
   const commandListRef = useRef<HTMLDivElement>(null);
+
+  // Separate enabled and disabled locations
+  const enabledLocations = filterLocations(locations, filters);
+  const disabledLocations = locations.filter(
+    (loc) => !enabledLocations.some((enabled) => enabled.id === loc.id),
+  );
 
   const { data: databases } = useQuery({
     ...trpc.user.getUserDatabasesFromNotion.queryOptions(),
@@ -171,7 +177,7 @@ function SearchBar({
             <BuyMeACoffeeCommand />
           </CommandGroup>
           <CommandGroup heading="Locations">
-            {locations.map((location) => (
+            {enabledLocations.map((location) => (
               <CommandItem
                 key={location.id}
                 onSelect={() => {
@@ -221,6 +227,70 @@ function SearchBar({
               </CommandItem>
             ))}
           </CommandGroup>
+          {disabledLocations.length > 0 && (
+            <CommandGroup heading="Filtered out locations">
+              {disabledLocations.map((location) => (
+                <CommandItem
+                  key={`disabled-${location.id}`}
+                  onSelect={() => {
+                    clearFilters();
+                    toast.success("Filters cleared!");
+                    // Focus the location after a delay to allow filters to clear and DOM to stabilize
+                    setTimeout(() => {
+                      focusFromSidebar(location.lat, location.lng, location.id);
+                    }, 300);
+                    setOpen(false);
+                  }}
+                >
+                  <div className="flex w-full items-start justify-between gap-3">
+                    <div className="flex flex-col items-start gap-2 overflow-hidden opacity-60">
+                      <div className="flex w-full items-center gap-2">
+                        <span className="text-lg">{location.icon ?? "📍"}</span>
+                        <span className="w-full truncate font-medium">
+                          {location.name}
+                        </span>
+                      </div>
+                      <span className="text-muted-foreground w-full truncate text-xs">
+                        {location.address}
+                      </span>
+                      <div className="flex flex-wrap items-center gap-1">
+                        <Badge variant="outline" className="text-xs">
+                          <FilterX className="mr-1 h-3 w-3" />
+                          Clear filters to view
+                        </Badge>
+                        {location.filterOptions.length > 0 &&
+                          location.filterOptions
+                            .slice(0, 3)
+                            .map((option: FilterOption) =>
+                              option.values?.slice(0, 2).map((value) => (
+                                <Badge
+                                  key={`${option.name}-${value.name}`}
+                                  className={cn(
+                                    "gap-0 opacity-50",
+                                    notionColourMap[
+                                      value.color as keyof typeof notionColourMap
+                                    ].bg,
+                                    notionColourMap[
+                                      value.color as keyof typeof notionColourMap
+                                    ].text,
+                                  )}
+                                >
+                                  {value.name}
+                                </Badge>
+                              )),
+                            )}
+                      </div>
+                    </div>
+                    <CornerDownLeft
+                      width={8}
+                      height={8}
+                      className="text-muted-foreground size-3!"
+                    />
+                  </div>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          )}
         </CommandList>
       </CommandDialog>
     </>
@@ -366,7 +436,7 @@ const ClearFiltersCommand = ({
 }: {
   setOpen: (open: boolean) => void;
 }) => {
-  const { filters, clearFilters } = useSidebarStore();
+  const { filters, clearFilters } = useMapStore();
 
   if (filters.length === 0) {
     return null;
@@ -453,7 +523,7 @@ function getShareUrl(shareHash: string, withFilters: boolean) {
 }
 
 const ShareCommand = ({ shareHash }: { shareHash: string }) => {
-  const { filters } = useSidebarStore();
+  const { filters } = useMapStore();
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
 

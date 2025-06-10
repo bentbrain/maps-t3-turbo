@@ -1,11 +1,10 @@
 "use client";
 
-import type { DatabaseProperty } from "@/lib/sidebar-store";
+import type { DatabaseProperty } from "@/lib/map-store";
 import type { Location } from "@/lib/types";
 import { useState } from "react";
 import { useMapStore } from "@/lib/map-store";
 import { filterLocations, sortLocations } from "@/lib/map-utils";
-import { useSidebarStore } from "@/lib/sidebar-store";
 import { Layers } from "lucide-react";
 
 import { cn } from "@acme/ui";
@@ -39,8 +38,8 @@ function LocationList({
   databaseProperties: Record<string, DatabaseProperty>;
   groupBy: string | null;
 }) {
-  const { selectedMarkerId, focusFromSidebar } = useMapStore();
-  const { filters, sortDirection } = useSidebarStore();
+  const { selectedMarkerId, focusFromSidebar, filters, sortDirection } =
+    useMapStore();
 
   // Apply filters and sorting in sequence
   const filteredLocations = filterLocations(locations, filters);
@@ -194,7 +193,7 @@ export function SidebarClientList({
   properties: Record<string, DatabaseProperty>;
   locations: Location[];
 }) {
-  const { filters } = useSidebarStore();
+  const { filters } = useMapStore();
   const [groupBy, setGroupBy] = useState<string | null>(null);
 
   const { leftSidebar } = useMultiSidebar();

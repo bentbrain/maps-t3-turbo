@@ -1,7 +1,7 @@
-import type { DatabaseProperty } from "@/lib/sidebar-store";
+import type { DatabaseProperty } from "@/lib/map-store";
 import type { Location } from "@/lib/types";
-import { useState } from "react";
-import { useSidebarStore } from "@/lib/sidebar-store";
+import { useCallback, useState } from "react";
+import { useMapStore } from "@/lib/map-store";
 import { CircleMinus, Loader2, Plus } from "lucide-react";
 
 import { Button } from "@acme/ui/button";
@@ -39,7 +39,7 @@ export function SidebarFilterSort({
     updateNumberFilter,
     removeFilter,
     clearFilters,
-  } = useSidebarStore();
+  } = useMapStore();
 
   // State for new filter being created
   const [newFilterProperty, setNewFilterProperty] = useState<string | null>(
@@ -47,6 +47,69 @@ export function SidebarFilterSort({
   );
   const [newFilterOperator, setNewFilterOperator] = useState<"gt" | "lt">("gt");
   const [newFilterValue, setNewFilterValue] = useState<string>("");
+
+  // Generate a unique ID for each filter
+  const handleAddFilter = useCallback(() => {
+    if (newFilterProperty && newFilterValue) {
+      const value = parseFloat(newFilterValue);
+      if (!isNaN(value)) {
+        // Add a timestamp to make each filter unique
+        const uniqueProperty = `${newFilterProperty}_${Date.now()}`;
+        updateNumberFilter(uniqueProperty, newFilterOperator, value);
+        // Reset form
+        setNewFilterProperty(null);
+        setNewFilterOperator("gt");
+        setNewFilterValue("");
+      }
+    }
+  }, [
+    newFilterProperty,
+    newFilterValue,
+    newFilterOperator,
+    updateNumberFilter,
+  ]);
+
+  // Memoize filter handlers to prevent excessive re-renders
+  const handleSelectAllToggle = useCallback(
+    (filterName: string, allOptions: { name: string }[], checked: boolean) => {
+      if (checked) {
+        // Include all values
+        updateFilter(
+          filterName,
+          allOptions.map((v) => v.name),
+        );
+      } else {
+        // Include no values
+        removeFilter(filterName);
+      }
+    },
+    [updateFilter, removeFilter],
+  );
+
+  const handleIndividualToggle = useCallback(
+    (
+      filterName: string,
+      optionName: string,
+      includedValues: string[],
+      checked: boolean,
+    ) => {
+      if (checked) {
+        // Include by adding to included values
+        updateFilter(filterName, [...includedValues, optionName]);
+      } else {
+        // Exclude by removing from included values
+        const newIncludedValues = includedValues.filter(
+          (v) => v !== optionName,
+        );
+        if (newIncludedValues.length === 0) {
+          removeFilter(filterName);
+        } else {
+          updateFilter(filterName, newIncludedValues);
+        }
+      }
+    },
+    [updateFilter, removeFilter],
+  );
 
   if (locations.length === 0) {
     return null;
@@ -97,22 +160,6 @@ export function SidebarFilterSort({
   // Get current number filters
   const numberFilters = filters.filter((f) => f.type === "number");
 
-  // Generate a unique ID for each filter
-  const handleAddFilter = () => {
-    if (newFilterProperty && newFilterValue) {
-      const value = parseFloat(newFilterValue);
-      if (!isNaN(value)) {
-        // Add a timestamp to make each filter unique
-        const uniqueProperty = `${newFilterProperty}_${Date.now()}`;
-        updateNumberFilter(uniqueProperty, newFilterOperator, value);
-        // Reset form
-        setNewFilterProperty(null);
-        setNewFilterOperator("gt");
-        setNewFilterValue("");
-      }
-    }
-  };
-
   // Group filters by property for display
   const groupedFilters = numberFilters.reduce(
     (acc, filter) => {
@@ -159,16 +206,11 @@ export function SidebarFilterSort({
                 className="data-[state=checked]:bg-lime-800"
                 checked={allSelected}
                 onCheckedChange={(checked: boolean) => {
-                  if (checked) {
-                    // Include all values
-                    updateFilter(
-                      filterOption.name,
-                      allOptionValues.map((v) => v.name),
-                    );
-                  } else {
-                    // Include no values
-                    removeFilter(filterOption.name);
-                  }
+                  handleSelectAllToggle(
+                    filterOption.name,
+                    allOptionValues,
+                    checked,
+                  );
                 }}
               />
             </SidebarGroupLabel>
@@ -187,26 +229,12 @@ export function SidebarFilterSort({
                         checked={isSelected}
                         className="data-[state=checked]:bg-lime-500"
                         onCheckedChange={(checked: boolean) => {
-                          if (checked) {
-                            // Include by adding to included values
-                            updateFilter(filterOption.name, [
-                              ...includedValues,
-                              option.name,
-                            ]);
-                          } else {
-                            // Exclude by removing from included values
-                            const newIncludedValues = includedValues.filter(
-                              (v) => v !== option.name,
-                            );
-                            if (newIncludedValues.length === 0) {
-                              removeFilter(filterOption.name);
-                            } else {
-                              updateFilter(
-                                filterOption.name,
-                                newIncludedValues,
-                              );
-                            }
-                          }
+                          handleIndividualToggle(
+                            filterOption.name,
+                            option.name,
+                            includedValues,
+                            checked,
+                          );
                         }}
                       />
                     </SidebarMenuItem>

@@ -2,7 +2,7 @@
 
 import type { Location, MapBounds } from "@/lib/types";
 import type { Marker } from "@googlemaps/markerclusterer";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { useMapStore } from "@/lib/map-store";
 import {
   filterLocations,
@@ -10,7 +10,7 @@ import {
   MAP_STYLES,
   markerIconEmojiMap,
 } from "@/lib/map-utils";
-import { useSidebarStore } from "@/lib/sidebar-store";
+import { useFilterUrlSync } from "@/lib/use-filter-url-sync";
 import {
   MarkerClusterer,
   SuperClusterAlgorithm,
@@ -58,6 +58,7 @@ const ClusteredMarkers = ({
   const markersRef = useRef<Record<string, Marker>>({});
   const map = useMap();
   const { setSelectedMarkerId } = useMapStore();
+  const prevLocationIdsRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     if (!map) return;
@@ -125,19 +126,57 @@ const ClusteredMarkers = ({
     };
   }, [map, setSelectedMarkerId]);
 
+  // Clean up markers for locations that are no longer in the filtered list
+  useEffect(() => {
+    const currentLocationIds = new Set(locations.map((loc) => loc.id));
+    const clusterer = clustererRef.current;
+
+    if (clusterer) {
+      // Remove markers for locations that are no longer in the current locations array
+      prevLocationIdsRef.current.forEach((locationId) => {
+        if (
+          !currentLocationIds.has(locationId) &&
+          markersRef.current[locationId]
+        ) {
+          try {
+            clusterer.removeMarker(markersRef.current[locationId]);
+          } catch (error) {
+            console.debug(
+              "Marker removal error during cleanup (safe to ignore):",
+              error,
+            );
+          }
+          delete markersRef.current[locationId];
+        }
+      });
+    }
+
+    // Update the previous location IDs for next comparison
+    prevLocationIdsRef.current = currentLocationIds;
+  }, [locations]);
+
   const handleMarkerRef = (marker: Marker | null, locationId: string) => {
     const clusterer = clustererRef.current;
     if (!clusterer) return;
 
-    if (!marker) {
-      if (markersRef.current[locationId]) {
+    // Always remove existing marker first to avoid duplicates
+    if (markersRef.current[locationId]) {
+      try {
         clusterer.removeMarker(markersRef.current[locationId]);
-        delete markersRef.current[locationId];
+      } catch (error) {
+        console.debug("Marker removal error (safe to ignore):", error);
       }
-    } else {
-      if (!markersRef.current[locationId]) {
+      delete markersRef.current[locationId];
+    }
+
+    // Add new marker if provided
+    if (marker) {
+      try {
         markersRef.current[locationId] = marker;
         clusterer.addMarker(marker);
+      } catch (error) {
+        console.debug("Marker addition error (safe to ignore):", error);
+        delete markersRef.current[locationId];
       }
     }
   };
@@ -176,38 +215,38 @@ const MarkerWithInfoWindow = ({
 }) => {
   "use memo";
   const [markerRef, marker] = useAdvancedMarkerRef();
-  const [localIsOpen, setLocalIsOpen] = useState(isOpen);
   const map = useMap();
-
-  // Handle external state changes (e.g. from sidebar)
-  useEffect(() => {
-    setLocalIsOpen(isOpen);
-  }, [isOpen]);
 
   // Handle map panning when marker is opened
   useEffect(() => {
-    if (localIsOpen && map) {
-      map.panTo({ lat: location.lat, lng: location.lng });
-      map.setZoom(clickZoomLevel);
+    if (isOpen && map) {
+      try {
+        map.panTo({ lat: location.lat, lng: location.lng });
+        map.setZoom(clickZoomLevel);
+      } catch (error) {
+        console.debug("Map pan error (safe to ignore):", error);
+      }
     }
-  }, [localIsOpen, map, location.lat, location.lng, clickZoomLevel]);
+  }, [isOpen, map, location.lat, location.lng, clickZoomLevel]);
 
   const handleMarkerClick = (e: {
     domEvent: { stopPropagation: () => void };
   }) => {
     e.domEvent.stopPropagation();
-    const newIsOpen = !localIsOpen;
-    setLocalIsOpen(newIsOpen);
-    onToggle(newIsOpen);
+    onToggle(!isOpen);
   };
 
+  const handleClose = () => {
+    onToggle(false);
+  };
+
+  // Handle marker registration with clusterer
   useEffect(() => {
     if (marker && location.icon) {
       markerIconEmojiMap.set(marker, location.icon);
     }
     setMarkerRef(marker);
-    return () => setMarkerRef(null);
-  }, [marker, setMarkerRef, location.icon]);
+  }, [marker, location.icon, setMarkerRef]);
 
   return (
     <AdvancedMarker
@@ -215,7 +254,7 @@ const MarkerWithInfoWindow = ({
       onClick={handleMarkerClick}
       position={{ lat: location.lat, lng: location.lng }}
       className="relative max-w-full"
-      zIndex={localIsOpen ? 1000 : 1}
+      zIndex={isOpen ? 1000 : 1}
     >
       <Pin
         background={"#000000"}
@@ -223,20 +262,19 @@ const MarkerWithInfoWindow = ({
         glyphColor={"#FFFFFF"}
         glyph={location.icon}
       />
-      {localIsOpen && (
+      {isOpen && (
         <CustomInfoWindow
+          key={`info-${location.id}`}
           location={location}
-          isOpen={localIsOpen}
-          onClose={() => {
-            setLocalIsOpen(false);
-            onToggle(false);
-          }}
+          isOpen={isOpen}
+          onClose={handleClose}
           sharePage={sharePage}
         />
       )}
     </AdvancedMarker>
   );
 };
+
 export default function GoogleMapView({
   locations,
   initialBounds,
@@ -245,12 +283,11 @@ export default function GoogleMapView({
   clickZoomLevel = 18,
 }: Props) {
   "use memo";
-  const { selectedMarkerId, setSelectedMarkerId, userLocation } = useMapStore();
-  const { syncWithUrl, filters } = useSidebarStore();
+  const { selectedMarkerId, setSelectedMarkerId, userLocation, filters } =
+    useMapStore();
 
-  useEffect(() => {
-    syncWithUrl();
-  }, [syncWithUrl]);
+  // Handle URL synchronization with Next.js hooks
+  useFilterUrlSync();
 
   // Apply filters and sorting in sequence
   const filteredLocations = filterLocations(locations, filters);
@@ -278,7 +315,13 @@ export default function GoogleMapView({
             gestureHandling="greedy"
             disableDefaultUI={false}
             mapId={env.NEXT_PUBLIC_GOOGLE_MAPS_ID}
-            onClick={() => setSelectedMarkerId(null)}
+            onClick={() => {
+              try {
+                setSelectedMarkerId(null);
+              } catch (error) {
+                console.debug("Error clearing selected marker:", error);
+              }
+            }}
             onIdle={(e) => useMapStore.getState().setMapInstance(e.map)}
             styles={MAP_STYLES}
           >
