@@ -2,7 +2,7 @@
 
 import type { Location, MapBounds } from "@/lib/types";
 import type { Marker } from "@googlemaps/markerclusterer";
-import { Fragment, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMapStore } from "@/lib/map-store";
 import {
   filterLocations,
@@ -18,7 +18,6 @@ import {
 import {
   AdvancedMarker,
   APIProvider,
-  InfoWindow,
   Map,
   Pin,
   useAdvancedMarkerRef,
@@ -29,8 +28,8 @@ import { createRoot } from "react-dom/client";
 import { env } from "@acme/env/env";
 import { useMultiSidebar } from "@acme/ui/sidebar";
 
+import { CustomInfoWindow } from "./map/custom-info-window";
 import { MarkerCluster } from "./map/marker-cluster";
-import { MarkerInfoWindow } from "./map/marker-info-window";
 import { UserLocationDot } from "./map/user-location-dot";
 
 interface Props {
@@ -38,6 +37,7 @@ interface Props {
   initialBounds: MapBounds;
   initialCenter: { lat: number; lng: number };
   sharePage?: boolean;
+  clickZoomLevel?: number;
 }
 
 const ClusteredMarkers = ({
@@ -45,11 +45,13 @@ const ClusteredMarkers = ({
   activeInfoWindow,
   onToggleInfoWindow,
   sharePage,
+  clickZoomLevel = 16,
 }: {
   locations: Location[];
   activeInfoWindow: string | null;
   onToggleInfoWindow: (isOpen: boolean, locationId: string) => void;
   sharePage?: boolean;
+  clickZoomLevel?: number;
 }) => {
   "use memo";
   const clustererRef = useRef<MarkerClusterer | null>(null);
@@ -150,6 +152,7 @@ const ClusteredMarkers = ({
           onToggle={(isOpen) => onToggleInfoWindow(isOpen, loc.id)}
           setMarkerRef={(marker) => handleMarkerRef(marker, loc.id)}
           sharePage={sharePage}
+          clickZoomLevel={clickZoomLevel}
         />
       ))}
     </>
@@ -162,12 +165,14 @@ const MarkerWithInfoWindow = ({
   onToggle,
   setMarkerRef,
   sharePage,
+  clickZoomLevel = 16,
 }: {
   location: Location;
   isOpen: boolean;
   onToggle: (isOpen: boolean) => void;
   setMarkerRef: (marker: Marker | null) => void;
   sharePage?: boolean;
+  clickZoomLevel?: number;
 }) => {
   "use memo";
   const [markerRef, marker] = useAdvancedMarkerRef();
@@ -183,9 +188,9 @@ const MarkerWithInfoWindow = ({
   useEffect(() => {
     if (localIsOpen && map) {
       map.panTo({ lat: location.lat, lng: location.lng });
-      map.setZoom(16);
+      map.setZoom(clickZoomLevel);
     }
-  }, [localIsOpen, map, location.lat, location.lng]);
+  }, [localIsOpen, map, location.lat, location.lng, clickZoomLevel]);
 
   const handleMarkerClick = (e: {
     domEvent: { stopPropagation: () => void };
@@ -205,34 +210,31 @@ const MarkerWithInfoWindow = ({
   }, [marker, setMarkerRef, location.icon]);
 
   return (
-    <Fragment>
-      <AdvancedMarker
-        ref={markerRef}
-        onClick={handleMarkerClick}
-        position={{ lat: location.lat, lng: location.lng }}
-        className="max-w-full"
-      >
-        <Pin
-          background={"#000000"}
-          borderColor={"#000000"}
-          glyphColor={"#FFFFFF"}
-          glyph={location.icon}
-          scale={1.1}
+    <AdvancedMarker
+      ref={markerRef}
+      onClick={handleMarkerClick}
+      position={{ lat: location.lat, lng: location.lng }}
+      className="relative max-w-full"
+      zIndex={localIsOpen ? 1000 : 1}
+    >
+      <Pin
+        background={"#000000"}
+        borderColor={"#000000"}
+        glyphColor={"#FFFFFF"}
+        glyph={location.icon}
+      />
+      {localIsOpen && (
+        <CustomInfoWindow
+          location={location}
+          isOpen={localIsOpen}
+          onClose={() => {
+            setLocalIsOpen(false);
+            onToggle(false);
+          }}
+          sharePage={sharePage}
         />
-        {localIsOpen && (
-          <InfoWindow
-            className="@container w-72 max-w-full"
-            anchor={marker}
-            onCloseClick={() => {
-              setLocalIsOpen(false);
-              onToggle(false);
-            }}
-          >
-            <MarkerInfoWindow location={location} sharePage={sharePage} />
-          </InfoWindow>
-        )}
-      </AdvancedMarker>
-    </Fragment>
+      )}
+    </AdvancedMarker>
   );
 };
 export default function GoogleMapView({
@@ -240,6 +242,7 @@ export default function GoogleMapView({
   initialBounds,
   initialCenter,
   sharePage = true,
+  clickZoomLevel = 18,
 }: Props) {
   "use memo";
   const { selectedMarkerId, setSelectedMarkerId, userLocation } = useMapStore();
@@ -292,6 +295,7 @@ export default function GoogleMapView({
                   setSelectedMarkerId(isOpen ? locationId : null)
                 }
                 sharePage={sharePage}
+                clickZoomLevel={clickZoomLevel}
               />
             )}
           </Map>
