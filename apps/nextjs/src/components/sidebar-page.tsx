@@ -208,7 +208,11 @@ export function PageSidebar() {
   }
 
   return (
-    <Sidebar className="stable-gutter @container" side="right">
+    <Sidebar
+      variant="floating"
+      className="stable-gutter @container bg-white"
+      side="right"
+    >
       {isLoading || isDatabaseLoading ? (
         <PageSidebarSkeleton />
       ) : error ? (

@@ -253,16 +253,19 @@ export default function GoogleMapView({
   const filteredLocations = filterLocations(locations, filters);
   const offsetLocations = getOffsetLocations(filteredLocations);
 
-  const { leftSidebar } = useMultiSidebar();
+  const { leftSidebar, rightSidebar } = useMultiSidebar();
+
+  const sidebarOpen =
+    leftSidebar.state === "expanded" || rightSidebar.state === "expanded";
 
   return (
     <div
-      className="h-full w-full bg-white p-0 transition-all data-[sidebar-state=expanded]:pr-3 data-[sidebar-state=expanded]:pb-3"
-      data-sidebar-state={leftSidebar.isMobile ? "mobile" : leftSidebar.state}
+      className="h-full w-full bg-white p-0 transition-all data-[sidebar-state=true]:px-3 data-[sidebar-state=true]:pb-3"
+      data-sidebar-state={leftSidebar.isMobile ? "mobile" : sidebarOpen}
     >
       <div
-        className="h-full w-full overflow-hidden rounded-none transition-all data-[sidebar-state=expanded]:rounded-lg"
-        data-sidebar-state={leftSidebar.isMobile ? "mobile" : leftSidebar.state}
+        className="h-full w-full overflow-hidden rounded-none transition-all data-[sidebar-state=true]:rounded-lg data-[sidebar-state=true]:shadow-sm"
+        data-sidebar-state={leftSidebar.isMobile ? "mobile" : sidebarOpen}
       >
         <APIProvider apiKey={env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}>
           <Map
