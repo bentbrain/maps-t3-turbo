@@ -139,7 +139,7 @@ function PageSidebarSkeleton() {
       <SidebarHeader className="grid grid-cols-[1fr_auto] items-center gap-2 p-0 pr-4">
         <div className="flex flex-row items-center gap-2 p-4">
           <Skeleton className="h-8 w-8" />
-          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-8 w-full" />
         </div>
         <Button variant="outline" size="sm" className="w-full" disabled>
           <X className="h-4 w-4" />
