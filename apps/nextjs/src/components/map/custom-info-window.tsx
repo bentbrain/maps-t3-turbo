@@ -1,4 +1,5 @@
 import type { Location } from "@/lib/types";
+import { useRef } from "react";
 
 import { MarkerInfoWindow } from "./marker-info-window";
 
@@ -15,12 +16,17 @@ export const CustomInfoWindow = ({
   onClose,
   sharePage,
 }: CustomInfoWindowProps) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+
   if (!isOpen) {
     return null;
   }
 
   return (
-    <div className="custom-info-window pointer-events-auto absolute bottom-full left-1/2 mb-2 -translate-x-1/2">
+    <div
+      ref={containerRef}
+      className="custom-info-window pointer-events-auto absolute bottom-full left-1/2 mb-2 -translate-x-1/2"
+    >
       <div className="@container relative w-[calc(100vw-40px)] max-w-xs rounded-lg border bg-white/40 shadow-lg backdrop-blur-sm sm:min-w-sm">
         <div className="p-4">
           <MarkerInfoWindow

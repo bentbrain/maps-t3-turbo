@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useSidebarStore } from "@/lib/sidebar-store";
+import React, { useState } from "react";
+import { useMapStore } from "@/lib/map-store";
 import { CheckCircle, Filter, FilterX, Share } from "lucide-react";
 import { toast } from "sonner";
 
@@ -19,7 +19,7 @@ function getShareUrl(shareHash: string, withFilters: boolean) {
 }
 
 export function CopyButton({ shareHash }: { shareHash: string }) {
-  const { filters } = useSidebarStore();
+  const { filters } = useMapStore();
   const [copied, setCopied] = useState<boolean>(false);
   const [isOpen, setIsOpen] = useState(false);
 
