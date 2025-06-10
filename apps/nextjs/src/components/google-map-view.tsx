@@ -258,11 +258,11 @@ export default function GoogleMapView({
   return (
     <div
       className="h-full w-full bg-white p-0 transition-all data-[sidebar-state=expanded]:pr-3 data-[sidebar-state=expanded]:pb-3"
-      data-sidebar-state={leftSidebar.state}
+      data-sidebar-state={leftSidebar.isMobile ? "mobile" : leftSidebar.state}
     >
       <div
         className="h-full w-full overflow-hidden rounded-none transition-all data-[sidebar-state=expanded]:rounded-lg"
-        data-sidebar-state={leftSidebar.state}
+        data-sidebar-state={leftSidebar.isMobile ? "mobile" : leftSidebar.state}
       >
         <APIProvider apiKey={env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}>
           <Map

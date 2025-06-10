@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { useTRPC } from "@/trpc/react";
 import { useQuery } from "@tanstack/react-query";
 
+import { cn } from "@acme/ui";
 import {
   Select,
   SelectContent,
@@ -12,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@acme/ui/select";
+import { useMultiSidebar } from "@acme/ui/sidebar";
 import { Skeleton } from "@acme/ui/skeleton";
 
 function DatabaseSelect({
@@ -32,6 +34,9 @@ function DatabaseSelect({
   });
 
   const [open, setOpen] = useState(false);
+
+  const { leftSidebar } = useMultiSidebar();
+
   const handleChange = (value: string) => {
     setOpen(false);
     redirect(`/${userId}/${value}`);
@@ -53,26 +58,32 @@ function DatabaseSelect({
   }
 
   return (
-    <Select
-      onValueChange={handleChange}
-      value={databaseId ?? undefined}
-      open={open}
-      onOpenChange={setOpen}
+    <div
+      className={cn("", {
+        "pr-2": leftSidebar.isMobile,
+      })}
     >
-      <SelectTrigger className="mx-auto w-full max-w-sm">
-        <SelectValue placeholder="Select a database" />
-      </SelectTrigger>
-      <SelectContent>
-        {databases.map((database) => (
-          <SelectItem key={database.id} value={database.id}>
-            {database.icon?.type === "emoji" && (
-              <span className="text-xs">{database.icon.emoji}</span>
-            )}
-            <span className="truncate">{database.title[0]?.plain_text}</span>
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+      <Select
+        onValueChange={handleChange}
+        value={databaseId ?? undefined}
+        open={open}
+        onOpenChange={setOpen}
+      >
+        <SelectTrigger className="mx-auto w-full max-w-sm">
+          <SelectValue placeholder="Select a database" />
+        </SelectTrigger>
+        <SelectContent>
+          {databases.map((database) => (
+            <SelectItem key={database.id} value={database.id}>
+              {database.icon?.type === "emoji" && (
+                <span className="text-xs">{database.icon.emoji}</span>
+              )}
+              <span className="truncate">{database.title[0]?.plain_text}</span>
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
   );
 }
 

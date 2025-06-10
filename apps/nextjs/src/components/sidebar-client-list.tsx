@@ -8,6 +8,7 @@ import { filterLocations, sortLocations } from "@/lib/map-utils";
 import { useSidebarStore } from "@/lib/sidebar-store";
 import { Layers } from "lucide-react";
 
+import { cn } from "@acme/ui";
 import { Badge } from "@acme/ui/badge";
 import {
   Select,
@@ -22,6 +23,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useMultiSidebar,
 } from "@acme/ui/sidebar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@acme/ui/tabs";
 
@@ -195,6 +197,8 @@ export function SidebarClientList({
   const { filters } = useSidebarStore();
   const [groupBy, setGroupBy] = useState<string | null>(null);
 
+  const { leftSidebar } = useMultiSidebar();
+
   // Get all available filter options from database properties
   const allFilterOptions = Object.entries(properties)
     .filter(
@@ -265,7 +269,12 @@ export function SidebarClientList({
           </TabsTrigger>
         </TabsList>
       </div>
-      <TabsContent value="locations">
+      <TabsContent
+        className={cn("", {
+          "pr-2": leftSidebar.isMobile,
+        })}
+        value="locations"
+      >
         {/* Group Controls */}
         <Select
           value={groupBy ?? "none"}
@@ -295,7 +304,12 @@ export function SidebarClientList({
           groupBy={groupBy}
         />
       </TabsContent>
-      <TabsContent value="filters">
+      <TabsContent
+        className={cn("", {
+          "pr-2": leftSidebar.isMobile,
+        })}
+        value="filters"
+      >
         <SidebarFilterSort
           databaseProperties={properties}
           locations={locations}

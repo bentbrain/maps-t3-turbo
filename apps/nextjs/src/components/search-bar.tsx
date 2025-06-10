@@ -104,7 +104,7 @@ function SearchBar({
         variant="outline"
         onClick={() => setOpen(true)}
       >
-        <span className="flex items-center gap-2">
+        <span className="flex items-center gap-2 pr-2 sm:pr-0">
           <Search className="size-3" /> Search..
         </span>
         <kbd className="bg-muted text-muted-foreground pointer-events-none hidden h-5 items-center gap-1 rounded-full border px-1.5 font-mono text-[10px] font-medium opacity-100 select-none md:inline-flex">

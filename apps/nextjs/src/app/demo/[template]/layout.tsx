@@ -56,7 +56,7 @@ export default async function ShowcaseLayout({
           <div className="flex justify-start">
             <RightSidebarTrigger />
           </div>
-          <div className="mx-auto flex w-52 gap-2">
+          <div className="mx-auto flex w-full gap-2 sm:w-52">
             <Suspense
               fallback={<Skeleton className="mx-auto h-9 w-full max-w-sm" />}
             >
