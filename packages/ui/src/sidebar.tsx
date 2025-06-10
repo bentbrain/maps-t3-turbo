@@ -242,7 +242,13 @@ function Sidebar({
           data-sidebar="sidebar"
           data-slot="sidebar"
           data-mobile="true"
-          className="text-sidebar-foreground w-(--sidebar-width) border-none bg-transparent bg-none p-2 pr-0 [&>button]:hidden"
+          className={cn(
+            "text-sidebar-foreground w-(--sidebar-width) border-none bg-transparent bg-none p-2 [&>button]:hidden",
+            {
+              "pr-0": side === "left",
+              "pl-0": side === "right",
+            },
+          )}
           style={
             {
               "--sidebar-width": SIDEBAR_WIDTH_MOBILE,
