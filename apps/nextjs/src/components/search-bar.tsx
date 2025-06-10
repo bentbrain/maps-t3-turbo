@@ -1,8 +1,7 @@
 "use client";
 
 import type { Location } from "@/lib/types";
-import type { FuseResultMatch } from "fuse.js";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { redirect, useRouter } from "next/navigation";
 import { useMapStore } from "@/lib/map-store";
@@ -13,7 +12,6 @@ import { useTRPC } from "@/trpc/react";
 import { useUser } from "@clerk/nextjs";
 import { BuyMeACoffee, Chrome, Notion } from "@ridemountainpig/svgl-react";
 import { useQuery } from "@tanstack/react-query";
-import Fuse from "fuse.js";
 import {
   CheckCircle,
   ChevronDown,
@@ -89,35 +87,6 @@ function SearchBar({
     return () => document.removeEventListener("keydown", down);
   }, []);
 
-  const searchResults = useMemo(() => {
-    const fuse = new Fuse(locations, {
-      keys: [
-        "name",
-        "address",
-        "filterOptions.name",
-        "filterOptions.values.name",
-        "properties.type",
-      ],
-      includeMatches: true,
-      threshold: 0.3,
-    });
-
-    if (!searchTerm) {
-      // Return all locations in the same format as Fuse's results
-      return locations.map((location) => ({
-        item: location,
-        matches: [],
-      }));
-    }
-    try {
-      const results = fuse.search(searchTerm);
-      return results;
-    } catch (error) {
-      console.error(error);
-      return [];
-    }
-  }, [searchTerm, locations]);
-
   // Reset search when dialog closes
   useEffect(() => {
     if (!open) {
@@ -125,49 +94,11 @@ function SearchBar({
     }
   }, [open]);
 
-  const renderHighlightedText = (
-    text: string,
-    matches: readonly FuseResultMatch[] = [],
-  ) => {
-    if (!matches.length) return text;
-
-    const match = matches.find((m) => m.value === text);
-    if (!match) return text;
-
-    const parts: { text: string; highlight: boolean }[] = [];
-    let lastIndex = 0;
-
-    match.indices.forEach(([start, end]) => {
-      if (start > lastIndex) {
-        parts.push({ text: text.slice(lastIndex, start), highlight: false });
-      }
-      parts.push({ text: text.slice(start, end + 1), highlight: true });
-      lastIndex = end + 1;
-    });
-
-    if (lastIndex < text.length) {
-      parts.push({ text: text.slice(lastIndex), highlight: false });
-    }
-
-    return (
-      <>
-        {parts.map((part, i) => (
-          <span
-            key={i}
-            className={part.highlight ? "bg-yellow-200 dark:bg-yellow-800" : ""}
-          >
-            {part.text}
-          </span>
-        ))}
-      </>
-    );
-  };
-
   return (
     <>
       <Button
         className={cn(
-          "text-muted-foreground w-full justify-between pl-2 text-xs opacity-100 transition-opacity",
+          "text-muted-foreground w-full justify-between rounded-full px-2 text-xs opacity-100 transition-opacity",
           open && "opacity-30",
         )}
         variant="outline"
@@ -176,7 +107,7 @@ function SearchBar({
         <span className="flex items-center gap-2">
           <Search className="size-3" /> Search..
         </span>
-        <kbd className="bg-muted text-muted-foreground pointer-events-none hidden h-5 items-center gap-1 rounded border px-1.5 font-mono text-[10px] font-medium opacity-100 select-none md:inline-flex">
+        <kbd className="bg-muted text-muted-foreground pointer-events-none hidden h-5 items-center gap-1 rounded-full border px-1.5 font-mono text-[10px] font-medium opacity-100 select-none md:inline-flex">
           <span className="text-xs">⌘</span>K
         </kbd>
       </Button>
@@ -240,7 +171,7 @@ function SearchBar({
             <BuyMeACoffeeCommand />
           </CommandGroup>
           <CommandGroup heading="Locations">
-            {searchResults.map(({ item: location, matches }) => (
+            {locations.map((location) => (
               <CommandItem
                 key={location.id}
                 onSelect={() => {
@@ -253,11 +184,11 @@ function SearchBar({
                     <div className="flex w-full items-center gap-2">
                       <span className="text-lg">{location.icon ?? "📍"}</span>
                       <span className="w-full truncate font-medium">
-                        {renderHighlightedText(location.name, matches)}
+                        {location.name}
                       </span>
                     </div>
                     <span className="text-muted-foreground w-full truncate text-xs">
-                      {renderHighlightedText(location.address, matches)}
+                      {location.address}
                     </span>
                     <div className="flex flex-wrap gap-1">
                       {location.filterOptions.length > 0 &&
@@ -275,7 +206,7 @@ function SearchBar({
                                 ].text,
                               )}
                             >
-                              {renderHighlightedText(value.name, matches)}
+                              {value.name}
                             </Badge>
                           )),
                         )}
@@ -407,7 +338,9 @@ const SidebarToggleCommand = ({
         leftSidebar.toggleSidebar();
         setOpen(false);
       }}
-      className="hidden @md:block"
+      className={cn("hidden", {
+        block: !leftSidebar.isMobile,
+      })}
     >
       <div className="flex w-full items-center justify-between gap-2">
         <span className="flex items-center gap-2 font-medium">

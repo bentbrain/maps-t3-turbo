@@ -68,7 +68,7 @@ function DatabaseSelect({
             {database.icon?.type === "emoji" && (
               <span className="text-xs">{database.icon.emoji}</span>
             )}
-            <span>{database.title[0]?.plain_text}</span>
+            <span className="truncate">{database.title[0]?.plain_text}</span>
           </SelectItem>
         ))}
       </SelectContent>

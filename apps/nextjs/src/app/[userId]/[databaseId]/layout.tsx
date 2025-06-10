@@ -30,9 +30,7 @@ export default function RootLayout({
   return (
     <AuthProtect params={params}>
       <MultiSidebarProvider defaultRightOpen={false}>
-        <Suspense>
-          <AppSidebar params={params} />
-        </Suspense>
+        <AppSidebar params={params} />
         <div className="grid h-dvh w-full grid-rows-[auto_1fr]">
           <header className="bg-background grid grid-cols-[auto_1fr_auto] gap-6 p-3">
             <div className="flex justify-start">

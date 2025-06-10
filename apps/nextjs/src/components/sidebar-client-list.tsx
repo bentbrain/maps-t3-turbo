@@ -247,9 +247,11 @@ export function SidebarClientList({
   return (
     <Tabs className="pl-2" defaultValue="locations">
       <div className="pr-2">
-        <TabsList className="w-full">
-          <TabsTrigger value="locations">Locations</TabsTrigger>
-          <TabsTrigger value="filters">
+        <TabsList className="w-full rounded-full">
+          <TabsTrigger className="rounded-full" value="locations">
+            Locations
+          </TabsTrigger>
+          <TabsTrigger className="rounded-full" value="filters">
             Filters
             {filters.length > 0 && (
               <Badge variant="secondary">
