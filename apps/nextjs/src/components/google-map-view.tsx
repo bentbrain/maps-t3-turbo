@@ -26,18 +26,19 @@ import {
 import { createRoot } from "react-dom/client";
 
 import { env } from "@acme/env/env";
-import { useMultiSidebar } from "@acme/ui/sidebar";
 
 import { CustomInfoWindow } from "./map/custom-info-window";
 import { MarkerCluster } from "./map/marker-cluster";
 import { UserLocationDot } from "./map/user-location-dot";
 
-interface Props {
+export interface MapComponentProps {
   locations: Location[];
   initialBounds: MapBounds;
   initialCenter: { lat: number; lng: number };
   sharePage?: boolean;
   clickZoomLevel?: number;
+  sidebarOpen: boolean;
+  leftSidebarIsMobile: boolean;
 }
 
 const ClusteredMarkers = ({
@@ -281,7 +282,9 @@ export default function GoogleMapView({
   initialCenter,
   sharePage = true,
   clickZoomLevel = 18,
-}: Props) {
+  sidebarOpen,
+  leftSidebarIsMobile,
+}: MapComponentProps) {
   "use memo";
   const { selectedMarkerId, setSelectedMarkerId, userLocation, filters } =
     useMapStore();
@@ -293,19 +296,14 @@ export default function GoogleMapView({
   const filteredLocations = filterLocations(locations, filters);
   const offsetLocations = getOffsetLocations(filteredLocations);
 
-  const { leftSidebar, rightSidebar } = useMultiSidebar();
-
-  const sidebarOpen =
-    leftSidebar.state === "expanded" || rightSidebar.state === "expanded";
-
   return (
     <div
       className="h-full w-full bg-white p-0 transition-all data-[sidebar-state=true]:px-3 data-[sidebar-state=true]:pb-3"
-      data-sidebar-state={leftSidebar.isMobile ? "mobile" : sidebarOpen}
+      data-sidebar-state={leftSidebarIsMobile ? "mobile" : sidebarOpen}
     >
       <div
         className="h-full w-full overflow-hidden rounded-none transition-all data-[sidebar-state=true]:rounded-lg data-[sidebar-state=true]:shadow-sm"
-        data-sidebar-state={leftSidebar.isMobile ? "mobile" : sidebarOpen}
+        data-sidebar-state={leftSidebarIsMobile ? "mobile" : sidebarOpen}
       >
         <APIProvider apiKey={env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}>
           <Map
