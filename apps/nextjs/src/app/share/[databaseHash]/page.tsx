@@ -62,6 +62,8 @@ async function DynamicParts({
           initialBounds={result.initialBounds}
           initialCenter={result.initialCenter}
           sharePage={true}
+          sidebarOpen={false}
+          leftSidebarIsMobile={false}
         />
       </main>
     );

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { unstable_cache as cache } from "next/cache";
 import Link from "next/link";
-import GoogleMapView from "@/components/google-map-view";
+import MapClientWrapper from "@/components/map-client-wrapper";
 import RetryButton from "@/components/retry-button";
 import {
   ErrorMessage,
@@ -97,7 +97,7 @@ async function DynamicParts({ params }: { params: Promise<Template> }) {
   }
 
   return (
-    <GoogleMapView
+    <MapClientWrapper
       locations={result.locations}
       initialBounds={result.initialBounds}
       initialCenter={result.initialCenter}
