@@ -17,7 +17,11 @@ function signPayload(payload: object) {
 export async function GET(req: NextRequest) {
   const { userId } = await auth();
   if (!userId) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+    const site = env.NEXT_PUBLIC_SITE_URL.replace(/\/$/, "");
+    const signinUrl = new URL(`${site}/sign-in`);
+    // Redirect back to this authorize URL after sign-in, preserving query params
+    signinUrl.searchParams.set("redirect_url", req.url);
+    return NextResponse.redirect(signinUrl.toString(), { status: 302 });
   }
   const url = new URL(req.url);
   const clientId = url.searchParams.get("client_id");

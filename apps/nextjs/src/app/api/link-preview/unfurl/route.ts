@@ -134,6 +134,17 @@ export async function POST(req: NextRequest) {
               },
             },
             {
+              id: "dev",
+              name: "Developer",
+              type: "inline",
+              inline: {
+                plain_text: {
+                  value: "Notion Locations",
+                  section: "secondary",
+                },
+              },
+            },
+            {
               id: "link",
               name: "Open",
               type: "inline",
