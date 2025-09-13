@@ -1,7 +1,6 @@
 import crypto from "node:crypto";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
 
 import { env } from "@acme/env/env";
 
@@ -34,57 +33,25 @@ function parseAccessToken(header: string) {
   }
 }
 
-const signInResponse = (uri: string, signinUrl: string) => {
-  return {
-    uri,
-    operations: [
-      {
-        path: ["attributes"],
-        set: [
-          {
-            id: "signin_title",
-            name: "Sign in required",
-            type: "inline",
-            inline: {
-              title: {
-                value: "Sign in to view this preview",
-                section: "title",
-              },
-            },
-          },
-          {
-            id: "signin_link",
-            name: "Sign in",
-            type: "inline",
-            inline: {
-              link: { value: signinUrl, section: "subtitle" },
-            },
-          },
-        ],
-      },
-    ],
-  };
-};
-
 export async function POST(req: NextRequest) {
   try {
-    const clerk = await auth();
-    // Clerk session must exist server-side for the integration to issue tokens
-    if (!clerk.userId) {
-      const site = env.NEXT_PUBLIC_SITE_URL.replace(/\/$/, "");
-      const signinUrl = `${site}/sign-in`;
-      const uri = "";
-      return NextResponse.json(signInResponse(uri, signinUrl), { status: 200 });
-    }
-
     const authHeader = req.headers.get("authorization") ?? "";
     const tokenSub = parseAccessToken(authHeader);
-    if (!tokenSub || tokenSub !== clerk.userId) {
-      const site = env.NEXT_PUBLIC_SITE_URL.replace(/\/$/, "");
-      const signinUrl = `${site}/sign-in`;
+    if (!tokenSub) {
       const body = (await req.json()) as UnfurlRequest | undefined | null;
       const uri = body && typeof body.uri === "string" ? body.uri : "";
-      return NextResponse.json(signInResponse(uri, signinUrl), { status: 200 });
+      return NextResponse.json(
+        {
+          uri,
+          operations: [
+            {
+              path: ["error"],
+              set: { status: 401, message: "Unauthorized" },
+            },
+          ],
+        },
+        { status: 200 },
+      );
     }
 
     const body = (await req.json()) as UnfurlRequest;
