@@ -63,6 +63,8 @@ export async function GET(req: NextRequest) {
     aud: "notion",
     redirect_uri: redirectUri,
     sub: userId,
+    client_id: clientId,
+    state,
     iat: Math.floor(Date.now() / 1000),
     exp: Math.floor(Date.now() / 1000) + 5 * 60,
   });

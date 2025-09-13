@@ -26,7 +26,10 @@ function parseAccessToken(header: string) {
   try {
     const json = JSON.parse(
       Buffer.from(payload, "base64url").toString("utf8"),
-    ) as unknown as { sub: string };
+    ) as unknown as { sub: string; exp?: number; aud?: string; iss?: string };
+    if (json.exp && Date.now() / 1000 > json.exp) return null;
+    if (json.aud && json.aud !== "notion") return null;
+    if (json.iss && json.iss !== env.NOTION_LINK_PREVIEW_DOMAIN) return null;
     return json.sub as string | null;
   } catch {
     return null;

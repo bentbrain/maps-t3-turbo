@@ -15,15 +15,28 @@ function verifyCode(code: string) {
     return null;
   const json = JSON.parse(
     Buffer.from(data, "base64url").toString("utf8"),
-  ) as unknown as { exp: number; redirect_uri: string; sub: string };
+  ) as unknown as {
+    exp: number;
+    redirect_uri: string;
+    sub: string;
+    iss?: string;
+    aud?: string;
+    client_id?: string;
+    state?: string;
+  };
   if (json.exp && Date.now() / 1000 > json.exp) return null;
-  return json as { redirect_uri: string; sub: string };
+  return json as {
+    redirect_uri: string;
+    sub: string;
+    iss?: string;
+    aud?: string;
+    client_id?: string;
+    state?: string;
+  };
 }
 
-function generateAccessToken(subject: string) {
-  const payload = Buffer.from(
-    JSON.stringify({ sub: subject, iat: Math.floor(Date.now() / 1000) }),
-  ).toString("base64url");
+function generateAccessToken(payloadObj: object) {
+  const payload = Buffer.from(JSON.stringify(payloadObj)).toString("base64url");
   const sig = crypto
     .createHmac("sha256", env.NOTION_LINK_PREVIEW_CLIENT_SECRET)
     .update(payload)
@@ -69,8 +82,26 @@ export async function POST(req: NextRequest) {
   if (!decoded || decoded.redirect_uri !== redirectUri) {
     return NextResponse.json({ error: "invalid_grant" }, { status: 400 });
   }
+  if (decoded.iss && decoded.iss !== env.NOTION_LINK_PREVIEW_DOMAIN) {
+    return NextResponse.json({ error: "invalid_grant" }, { status: 400 });
+  }
+  if (decoded.aud && decoded.aud !== "notion") {
+    return NextResponse.json({ error: "invalid_grant" }, { status: 400 });
+  }
+  if (decoded.client_id && decoded.client_id !== clientId) {
+    return NextResponse.json({ error: "invalid_grant" }, { status: 400 });
+  }
 
-  const accessToken = generateAccessToken(decoded.sub);
+  const now = Math.floor(Date.now() / 1000);
+  const accessToken = generateAccessToken({
+    typ: "access",
+    sub: decoded.sub,
+    aud: "notion",
+    iss: env.NOTION_LINK_PREVIEW_DOMAIN,
+    state: decoded.state,
+    iat: now,
+    exp: now + 60 * 30, // 30 minutes
+  });
 
   return NextResponse.json({
     access_token: accessToken,
