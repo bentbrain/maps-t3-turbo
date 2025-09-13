@@ -54,6 +54,7 @@
     "CHROME_EXECUTABLE_PATH",
     "ADMIN_NOTION_USER_ID",
     "GITHUB_PAT",
+    "NOTION_LINK_PREVIEW_*",
     "NEXT_PUBLIC_*"
   ],
   "globalPassThroughEnv": [

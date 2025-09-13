@@ -11,6 +11,10 @@ export const env = createEnv({
     ADMIN_NOTION_USER_ID: z.string().min(1),
     GITHUB_PAT: z.string().min(1),
     NEXT_PRIVATE_DATABASE_HASH_SECRET: z.string().min(1),
+    NOTION_LINK_PREVIEW_CLIENT_ID: z.string().min(1),
+    NOTION_LINK_PREVIEW_CLIENT_SECRET: z.string().min(1),
+    NOTION_LINK_PREVIEW_DOMAIN: z.string().min(1),
+    NOTION_LINK_PREVIEW_COOKIE_SECRET: z.string().min(1),
   },
   client: {
     NEXT_PUBLIC_NOTION_TOKEN: z.string().min(1),
@@ -50,6 +54,12 @@ export const env = createEnv({
     GITHUB_PAT: process.env.GITHUB_PAT,
     NEXT_PRIVATE_DATABASE_HASH_SECRET:
       process.env.NEXT_PRIVATE_DATABASE_HASH_SECRET,
+    NOTION_LINK_PREVIEW_CLIENT_ID: process.env.NOTION_LINK_PREVIEW_CLIENT_ID,
+    NOTION_LINK_PREVIEW_CLIENT_SECRET:
+      process.env.NOTION_LINK_PREVIEW_CLIENT_SECRET,
+    NOTION_LINK_PREVIEW_DOMAIN: process.env.NOTION_LINK_PREVIEW_DOMAIN,
+    NOTION_LINK_PREVIEW_COOKIE_SECRET:
+      process.env.NOTION_LINK_PREVIEW_COOKIE_SECRET,
   },
   // For Next.js >= 13.4.4, you only need to destructure client variables:
   // experimental__runtimeEnv: {
