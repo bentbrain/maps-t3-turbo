@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.4.2](https://github.com/bentbrain/maps-t3-turbo/compare/extension-v1.4.1...extension-v1.4.2) (2025-09-13)
+
+
+### Miscellaneous
+
+* update deps ([ebcc3b4](https://github.com/bentbrain/maps-t3-turbo/commit/ebcc3b48bdecec7d93fcff283ade239a36a71aa3))
+* update deps ([443e883](https://github.com/bentbrain/maps-t3-turbo/commit/443e8832ea7d90fb18aedb20aefc8d6dcf91d87e))
+
 ## [1.4.1](https://github.com/bentbrain/maps-t3-turbo/compare/extension-v1.4.0...extension-v1.4.1) (2025-06-08)
 
 
