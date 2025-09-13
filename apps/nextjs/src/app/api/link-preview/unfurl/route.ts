@@ -38,11 +38,17 @@ function parseAccessToken(header: string) {
 
 export async function POST(req: NextRequest) {
   try {
+    console.log("[link-preview][unfurl] POST start");
     const authHeader = req.headers.get("authorization") ?? "";
     const tokenSub = parseAccessToken(authHeader);
+    console.log("[link-preview][unfurl] auth header parsed", {
+      hasAuthHeader: Boolean(authHeader),
+      authorized: Boolean(tokenSub),
+    });
     if (!tokenSub) {
       const body = (await req.json()) as UnfurlRequest | undefined | null;
       const uri = body && typeof body.uri === "string" ? body.uri : "";
+      console.warn("[link-preview][unfurl] unauthorized request", { uri });
       return NextResponse.json(
         {
           uri,
@@ -61,13 +67,20 @@ export async function POST(req: NextRequest) {
 
     const urlParam = new URL(body.uri);
     const pathname = urlParam.pathname;
+    console.log("[link-preview][unfurl] request body parsed", {
+      uri: body.uri,
+    });
 
     // Example pattern: https://notionmaps.app/share/<databaseId>
     const shareRegex = /\/share\/([0-9a-f-]{32,36})/i;
     const shareMatch = shareRegex.exec(pathname);
     const databaseId = shareMatch?.[1];
+    console.log("[link-preview][unfurl] extracted databaseId", {
+      hasDatabaseId: Boolean(databaseId),
+    });
 
     if (!databaseId) {
+      console.warn("[link-preview][unfurl] unsupported URL", { uri: body.uri });
       return NextResponse.json(
         {
           uri: body.uri,
@@ -85,6 +98,11 @@ export async function POST(req: NextRequest) {
     const title = "Notion Maps Share";
     const site = env.NEXT_PUBLIC_SITE_URL.replace(/\/$/, "");
     const viewUrl = `${site}/share/${databaseId}`;
+
+    console.log("[link-preview][unfurl] success building response", {
+      databaseId,
+      viewUrl,
+    });
 
     return NextResponse.json({
       uri: body.uri,
