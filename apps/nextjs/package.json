@@ -18,7 +18,7 @@
     "@acme/env": "workspace:*",
     "@acme/ui": "workspace:*",
     "@acme/validators": "workspace:*",
-    "@clerk/nextjs": "^6.19.4",
+    "@clerk/nextjs": "catalog:",
     "@googlemaps/google-maps-services-js": "^3.4.1",
     "@googlemaps/markerclusterer": "^2.5.3",
     "@ridemountainpig/svgl-react": "^1.0.4",
